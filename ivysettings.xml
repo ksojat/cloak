@@ -1,0 +1,29 @@
+<ivysettings>
+    <settings defaultResolver='cloak'/>
+
+    <property
+        name='localrepo.pattern'
+        value='file://${ivy.settings.dir}/repo/ivy/[organisation]/[module]/[revision]'/>
+
+    <resolvers>
+        <chain name='cloak'>
+            <filesystem name='lib'>
+                <artifact pattern='${ivy.settings.dir}/lib/[artifact]-[revision].[ext]'/>
+            </filesystem>
+
+            <filesystem name='local'>
+                <ivy pattern='${ivy.local.default.root}/${ivy.local.default.ivy.pattern}'/>
+                <artifact pattern='${ivy.local.default.root}/${ivy.local.defautl.artifact.pattern}'/>
+            </filesystem>
+
+            <packager
+                name='localrepo'
+                buildRoot='${user.home}/.ivy2/packager/build'
+                preserveBuildDirectories='true'
+                resourceCache='${user.home}/.ivy2/packager/cache'>
+                <ivy pattern='${localrepo.pattern}/ivy.xml'/>
+                <artifact pattern='${localrepo.pattern}/packager.xml'/>
+            </packager>
+        </chain>
+    </resolvers>
+</ivysettings>

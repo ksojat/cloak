@@ -1,0 +1,7 @@
+# Vim temps..
+.*.swp
+
+# Ivy will manage libs
+lib/
+# No need for classes dir
+classes/

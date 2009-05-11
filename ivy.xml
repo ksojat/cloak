@@ -1,0 +1,13 @@
+<ivy-module version='2.0'>
+    <info
+        organisation='rosado.cloak'
+        module='cloak'/>
+
+    <configurations>
+        <conf name='default'/>
+    </configurations>
+
+    <dependencies>
+        <dependency org='org.clojure' name='clojure' rev='1.0.0'/>
+    </dependencies>
+</ivy-module>

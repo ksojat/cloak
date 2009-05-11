@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<!--
+    Copyright (c) Krešimir Šojat, 2009. All rights reserved.  The use
+    and distribution terms for this software are covered by the Eclipse
+    Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
+    which can be found in the file epl-v10.html at the root of this
+    distribution.  By using this software in any fashion, you are
+    agreeing to be bound by the terms of this license.  You must not
+    remove this notice, or any other, from this software.
+-->
+
+<packager-module version='1.0'>
+
+    <property name='name'     value='clojure'/>
+    <property name='revision' value='${ivy.packager.revision}'/>
+    <property name='archive'  value='${name}-${revision}'/>
+
+    <resource
+        dest='archive'
+        url='http://clojure.googlecode.com/files/clojure_1.0.0.zip'
+        sha1='fa7c03be9b30e9462b71aead03ea4487c6b9aeac'/>
+
+    <build>
+        <move
+            file='archive/clojure-1.0.0.jar'
+            tofile='artifacts/jars/clojure.jar'/>
+    </build>
+</packager-module>
