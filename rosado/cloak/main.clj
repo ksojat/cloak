@@ -16,7 +16,9 @@
 ;; between task names and indices of the graph.
 
 (ns rosado.cloak.main
-  (:import (java.io File))
+  (:import
+    (java.io File)
+    (org.apache.commons.io FileUtils))
   (:use rosado.math.graph))
 
 (defstruct task-struct :actions :deps :desc)
@@ -121,7 +123,7 @@
            (*error-handler* "Failure:" msg#)
            (throw (Exception. msg#))))
        (if (.exists f#)
-         (> (.lastModified o#) (.lastModified f#))
+         (FileUtisl/isFileOlder o# f#)
          true))))
 
 (defmacro file [file-name & rst]

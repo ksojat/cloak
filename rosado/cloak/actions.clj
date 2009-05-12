@@ -26,49 +26,34 @@
                (throw (Exception. "shell command failed.")))
            :else (throw (IllegalArgumentException. (format "sh: unsupported flag %s" (str flag)))))))
 
-;(defn copy
-;  "Copies a file"
-;  [src target]
-;  (let [src (File. src) t (File. target)
-;        target (if (.isDirectory t)
-;                 (File. target (.getName src))
-;                 t)]
-;    (when-not (.exists src)
-;      (throw (java.io.FileNotFoundException. (format "copy: Source file not found: %s" src))))
-;    (try
-;     (let [in (FileInputStream. src)
-;           out (FileOutputStream. target)
-;           buff (make-array Byte/TYPE 4096)]
-;       (loop [nbytes (.read in buff)]
-;         (when (not= nbytes -1)
-;           (.write out buff 0 nbytes)
-;           (recur (.read in buff)))))
-;     (finally
-;      (try
-;       (.close src)
-;       (.close target)
-;       (catch Exception e nil))))
-;    :ok))
 (defn copy
   "Copies a file"
-  [src dest]
-  (FileUtils/copyFile (File. src) (File. dest)))
+  [src-file dest-file]
+  (FileUtils/copyFile (File. src-file) (File. dest-file)))
+
+(defn copy-to
+  "Copies a file to destionation directory."
+  [src-file dest-dir]
+  (FileUtils/copyFileToDirectory (File. src-file) (File. dest-dir)))
 
 (defn move
   "Moves a file"
   [src target]
-  (let [src (File. src) target (File. target)]
-    (.renameTo src target)))
+  (FileUtils/moveFile (File. src) (File. target)))
 
 (defn mkdir
   "Creates directories, including necessary parent dirs."
   [& dirs]
   (doseq [dir dirs] (.mkdirs (File. dir))))
 
+; TODO: Do i need this?
 (defn exists? [fname] (.exists (File. fname)))
 
-; TODO: Split this to rm and rmdir, never do recursive delete with out any extra flags.!
-;(defn rm
-;  "Removes a file or direcory (like 'rm -r dirname')."
-;  [fname]
-;  (io/delete fname))
+(defn rm [file]
+  "Remove file."
+  (.delete file))
+
+(defn rmdir [dir]
+  "Remove directory recursively (like 'rm -r dirname')."
+  (FileUtils/deleteDirectory (File. dir)))
+
