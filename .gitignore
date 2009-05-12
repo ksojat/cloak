@@ -1,5 +1,6 @@
-# Vim temps..
+# temps..
 .*.swp
+*~
 
 # Ivy will manage libs
 lib/

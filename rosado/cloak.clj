@@ -10,16 +10,21 @@
 ;; remove this notice, or any other, from this software.
 
 (ns rosado.cloak
+  (:import (java.lang System))
   (:use rosado.cloak.main)
   (:gen-class))
 
-(def *progname* "cloak")
 (def *default-cloak-file* "CLOAK")
 (def *default-task* :default)
 (def *describe-only* false)
 (def *target-queue* [])
 (def *CWD* (System/getProperty "user.dir"))
 (def path-sep #^java.lang.String (java.io.File/separator))
+
+(def +settings+
+  (atom {:cwd  (System/getProperty "user.dir" "")
+         :bin  (System/getProperty "cloak.bin" "cloak")
+         :home (System/getProperty "cloak.home" "")})); TODO: Default to ~/.cloak
 
 (defn notification [& args]
   (apply println (cons " NOTIFICATION:" args)))
@@ -98,14 +103,14 @@
                     "-h" "print help"})
 
 (defn print-help []
-  (println " Cloak. A simple automation tool.")
-  (newline)
+  (println " Cloak. A simple automation tool.\n")
   (doseq [[opt des] cmd-line-opts]
-    (println (format " %1$-15s %2$s" opt des))))
+    (printf " %1$-15s %2$s\n" opt des)))
 
 (defn print-usage []
-  (println (format "usage: %s [options] [task-name]" *progname*))
-  (println (format "try '%s -h' for more information." *progname*)))
+  (let [bin (:bin @+settings+)]
+    (printf "usage: %s [options] [task-name]\n" bin)
+    (printf "try '%s -h' for more information.\n" bin)))
 
 ;; parses command line arguments
 (defmulti parse-arg first)
@@ -154,10 +159,5 @@
   (try
    (parse-arg args)
    (catch Exception e
-     (newline)
-     (println "Build failed.\n")
+     (println "\nBuild failed.\n")
      (System/exit 1))))
-
-;; (binding [*warn-on-reflection* false]
-;; ;  (parse-arg *command-line-args*)
-;;   (main-fun))

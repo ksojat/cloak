@@ -7,16 +7,16 @@
 ;; which can be found in the file CPL.TXT at the root of this
 ;; distribution.  By using this software in any fashion, you are
 ;; agreeing to be bound by the terms of this license.  You must not
-;; remove this notice, or any other, from this software. 
+;; remove this notice, or any other, from this software.
 
 (ns rosado.io
   (:import (java.io File FileReader FileWriter BufferedReader BufferedWriter
 					FileInputStream FileOutputStream FileOutputStream
 					BufferedInputStream BufferedOutputStream)))
 
-(defn reader 
+(defn reader
   "Returns a reader or input stream (buffered).
-  Optional keywords: :unbuff [:ub] - for unbuffered input. 
+  Optional keywords: :unbuff [:ub] - for unbuffered input.
   :bytes - for an InputStream instead of a Reader."
   [file-name & modes]
   (cond
@@ -26,7 +26,7 @@
 							(BufferedInputStream. (FileInputStream. file-name)))
    (some #{:unbuff :ub} modes) (FileReader. file-name)))
 
-(defn read-lines 
+(defn read-lines
   "Returns a vector of lines from reader.
  The lines don't include line termination characters"
   [#^java.io.BufferedReader rdr]

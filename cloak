@@ -1,8 +1,5 @@
 #! /bin/sh
 
-CLOAK_HOME=
-CLOAK_RC=
-CLOAK_CP=
 CLOAK_BIN=$0
 CLOAK_MAIN=rosado.cloak
 
@@ -18,16 +15,17 @@ if [ -z "$CLOAK_HOME" ]; then
     fi
 fi
 
-# Load global Cloak settings.
+# Load global Cloak settings. TODO: Include this in launcher
 if [ -f "$CLOAK_HOME/.cloakrc" ]; then
     CLOAK_RC="$CLOAK_HOME/.cloakrc"
 fi
 
 # Construct Cloak classpath.
-CLOAK_CP="$CLOAK_HOME/**/*.jar"
+CLOAK_CP=$CLOAK_HOME'/*'
 
 # Call Cloak.
-java -cp $CLOAK_CP $CLOAK_MAIN \
-    --dir $PWD \
-    --executable $CLOAK_BIN \
+java \
+    -Dcloak.bin=$CLOAK_BIN \
+    -Dcloak.home=$CLOAK_HOME \
+    -cp "$CLOAK_CP" $CLOAK_MAIN \
     $@

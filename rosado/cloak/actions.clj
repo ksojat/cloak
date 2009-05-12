@@ -12,7 +12,6 @@
 
 (ns rosado.cloak.actions
   (:use rosado.utils)
-  (:require [rosado.io :as io :only (exists? delete mkdir)])
   (:import (java.io File FileInputStream FileOutputStream)))
 
 (defn sh
@@ -58,11 +57,12 @@
 (defn mkdir
   "Creates directories, including necessary parent dirs."
   [& dirs]
-  (apply io/mkdir dirs))
+  (doseq [dir dirs] (.mkdirs (File. dir))))
 
-(defn exists? [fname] (io/exists? fname))
+(defn exists? [fname] (.exists (File. fname)))
 
-(defn rm
-  "Removes a file or direcory (like 'rm -r dirname')."
-  [fname]
-  (io/delete fname))
+; TODO: Split this to rm and rmdir, never do recursive delete with out any extra flags.!
+;(defn rm
+;  "Removes a file or direcory (like 'rm -r dirname')."
+;  [fname]
+;  (io/delete fname))

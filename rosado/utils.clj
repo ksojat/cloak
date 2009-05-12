@@ -7,11 +7,10 @@
 ;; which can be found in the file CPL.TXT at the root of this
 ;; distribution.  By using this software in any fashion, you are
 ;; agreeing to be bound by the terms of this license.  You must not
-;; remove this notice, or any other, from this software. 
+;; remove this notice, or any other, from this software.
 
 (ns rosado.utils
-  (:require [rosado.io :as io])
-  (:import (java.io InputStreamReader BufferedReader ))
+  (:import (java.io InputStreamReader BufferedReader))
   (:import (java.util Collections Arrays)))
 
 (defn read-all

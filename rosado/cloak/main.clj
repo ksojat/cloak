@@ -16,8 +16,8 @@
 ;; between task names and indices of the graph.
 
 (ns rosado.cloak.main
-  (:use rosado.math.graph)
-  (:require [rosado.io :as io]))
+  (:import (java.io File))
+  (:use rosado.math.graph))
 
 (defstruct task-struct :actions :deps :desc)
 
@@ -114,14 +114,14 @@
 
 (defn- pre-check-fn [file-name fnames]
   `(fn [#^String e#]
-     (let [f# (java.io.File. ~file-name)
-           o# (java.io.File. e#)]
-       (if (not (io/exists? o#))
+     (let [f# (File. ~file-name)
+           o# (File. e#)]
+       (if (not (.exists o#))
          (let [msg# (format "File dependency not met: %s" e#)]
            (*error-handler* "Failure:" msg#)
            (throw (Exception. msg#))))
-       (if (io/exists? f#)
-         (io/newer? o# f#)
+       (if (.exists f#)
+         (> (.lastModified o#) (.lastModified f#))
          true))))
 
 (defmacro file [file-name & rst]
