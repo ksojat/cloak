@@ -55,7 +55,6 @@
             <arg value="rosado.cloak"/>
             <arg value="rosado.cloak.actions"/>
             <arg value="rosado.cloak.main" />
-            <arg value='rosado.io'/>
             <arg value='rosado.utils'/>
             <arg value='rosado.math.graph'/>
 		</java>
