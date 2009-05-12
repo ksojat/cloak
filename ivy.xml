@@ -9,5 +9,9 @@
 
     <dependencies>
         <dependency org='org.clojure' name='clojure' rev='1.0.0'/>
+        <dependency org='commons-io' name='commons-io' rev='1.4'>
+            <artifact name='commons-io'/>
+            <exclude org='junit'/>
+        </dependency>
     </dependencies>
 </ivy-module>

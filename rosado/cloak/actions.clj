@@ -12,7 +12,9 @@
 
 (ns rosado.cloak.actions
   (:use rosado.utils)
-  (:import (java.io File FileInputStream FileOutputStream)))
+  (:import
+    (java.io File FileInputStream FileOutputStream)
+    (org.apache.commons.io FileUtils)))
 
 (defn sh
   "Performs a shell command."
@@ -24,29 +26,33 @@
                (throw (Exception. "shell command failed.")))
            :else (throw (IllegalArgumentException. (format "sh: unsupported flag %s" (str flag)))))))
 
+;(defn copy
+;  "Copies a file"
+;  [src target]
+;  (let [src (File. src) t (File. target)
+;        target (if (.isDirectory t)
+;                 (File. target (.getName src))
+;                 t)]
+;    (when-not (.exists src)
+;      (throw (java.io.FileNotFoundException. (format "copy: Source file not found: %s" src))))
+;    (try
+;     (let [in (FileInputStream. src)
+;           out (FileOutputStream. target)
+;           buff (make-array Byte/TYPE 4096)]
+;       (loop [nbytes (.read in buff)]
+;         (when (not= nbytes -1)
+;           (.write out buff 0 nbytes)
+;           (recur (.read in buff)))))
+;     (finally
+;      (try
+;       (.close src)
+;       (.close target)
+;       (catch Exception e nil))))
+;    :ok))
 (defn copy
   "Copies a file"
-  [src target]
-  (let [src (File. src) t (File. target)
-        target (if (.isDirectory t)
-                 (File. target (.getName src))
-                 t)]
-    (when-not (.exists src)
-      (throw (java.io.FileNotFoundException. (format "copy: Source file not found: %s" src))))
-    (try
-     (let [in (FileInputStream. src)
-           out (FileOutputStream. target)
-           buff (make-array Byte/TYPE 4096)]
-       (loop [nbytes (.read in buff)]
-         (when (not= nbytes -1)
-           (.write out buff 0 nbytes)
-           (recur (.read in buff)))))
-     (finally
-      (try
-       (.close src)
-       (.close target)
-       (catch Exception e nil))))
-    :ok))
+  [src dest]
+  (FileUtils/copyFile (File. src) (File. dest)))
 
 (defn move
   "Moves a file"

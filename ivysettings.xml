@@ -24,6 +24,8 @@
                 <ivy pattern='${localrepo.pattern}/ivy.xml'/>
                 <artifact pattern='${localrepo.pattern}/packager.xml'/>
             </packager>
+
+            <ibiblio name='ibiblio' m2compatible='true'/>
         </chain>
     </resolvers>
 </ivysettings>
