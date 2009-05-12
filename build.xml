@@ -1,4 +1,7 @@
-<project name="cloak" default="props" basedir=".">
+<project name="cloak" default="props" basedir="." xmlns:ivy='antlib:org.apache.ivy.ant'>
+
+    <property name='etc.dir' location='${basedir}/etc'/>
+    <property file='${etc.dir}/ivy.properties'/>
 
   <description>
 	A simple build system for Clojure.
@@ -10,7 +13,6 @@
 	<property name="build.classes.dir" location="${basedir}/classes" />
 
 	<path id="compile.classpath">
-    <pathelement path="${clj.dir}/clojure.jar" />
 		<fileset dir="${lib.dir}">
 			<include name="*.jar"/>
 		</fileset>
@@ -28,7 +30,7 @@
 		<path location="${build.classes.dir}" />
 	</path>
 
-	<target name="init">
+	<target name="init" depends='getivy'>
 		<mkdir dir="classes" />	
 	</target>
 
@@ -37,17 +39,25 @@
 	<target name="clean">
 		<delete dir="classes" />
 	</target>
+
+    <target name='resolve' depends='getivy'>
+        <ivy:configure file='${basedir}/ivysettings.xml'/>
+        <ivy:retrieve conf='default' pattern='${lib.dir}/[artifact]-[revision].[ext]'/>
+    </target>
 	
 	<target name="compile-clojure-src"
 					description="Compile Clojure sources"
-          depends="init">
+          depends="init, resolve">
 		<java classname="clojure.lang.Compile"
           classpath="${build}:${cljsrc}">
 			<sysproperty key="clojure.compile.path" value="${build.classes.dir}" />
 			<classpath refid="clj.compile.classpath" />
-      <arg value="rosado.cloak"/>
-      <arg value="rosado.cloak.actions"/>
-      <arg value="rosado.cloak.main" />
+            <arg value="rosado.cloak"/>
+            <arg value="rosado.cloak.actions"/>
+            <arg value="rosado.cloak.main" />
+            <arg value='rosado.io'/>
+            <arg value='rosado.utils'/>
+            <arg value='rosado.math.graph'/>
 		</java>
 	</target>
 
@@ -55,7 +65,7 @@
           description="Compile Cloak.">
 	</target>
 	
-  <target name="run" 
+  <target name="run"
 					depends="">
 		<java classname="rosado.cloak"
 					classpathref="run.classpath"
@@ -67,13 +77,39 @@
 
   <target name="jar" depends="compile"
           description="Package compiled *.class files into a jar.">
+    <mkdir dir='${dist.dir}'/>
     <jar destfile="${dist.dir}/rosado.cloak.jar" basedir="${build.classes.dir}"/>
   </target>
+
 
 	<!-- UTIL TARGETS -->
 
 	<target name="props">
 		<echoproperties />
 	</target>
+
+    <!--
+    Ivy targets.
+    -->
+
+    <target name='-ivy-download' unless='skip.ivy'>
+        <mkdir dir='${ivy.home}'/>
+        <get src='${ivy.url}' dest='${ivy.jar}' usetimestamp='yes'/>
+    </target>
+
+    <target name='-ivy-install'>
+        <available file='${ivy.jar}' property='skip.ivy'/>
+        <antcall target='-ivy-download'/>
+
+        <path id='ivy.lib.path'>
+            <fileset dir='${ivy.home}' includes='*.jar'/>
+        </path>
+        <taskdef
+            resource='org/apache/ivy/ant/antlib.xml'
+            uri='antlib:org.apache.ivy.ant'
+            classpathref='ivy.lib.path'/>
+    </target>
+
+    <target name='getivy' depends='-ivy-install'/>
 
 </project>

@@ -5,3 +5,5 @@
 lib/
 # No need for classes dir
 classes/
+# No need for dist dir
+bin/

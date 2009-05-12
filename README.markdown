@@ -1,7 +1,7 @@
 # CLOAK #
 
 Cloak is a simplistic automation tool written in [Clojure][]. It's heavily
-inspired by ruby [rake][]. 
+inspired by ruby [rake][].
 
 Usage
 ----------
@@ -20,12 +20,12 @@ You can also use the following options:
 You can also specify a series of task names (without leading colons),
 which will be executed in sequence (from left to right).
 
-Cloak provides two kinds of tasks: tasks and file tasks. 
+Cloak provides two kinds of tasks: tasks and file tasks.
 
 File tasks are geared towards *creating* files. Dependencies of a file
 task can be other files and tasks. If a dependency is a file,
 modification time of source and target files is compared before
-executing the task. 
+executing the task.
 
 rosado.cloak.actions provides a couple of basic file operations:
 `exists?`, `copy` , `move`, `rm`, `sh` (executing a shell
@@ -72,17 +72,12 @@ true for it to work:
 What it isn't
 -------------
 
-It's not an `ant` or `maven` replacement. 
+It's not an `ant` or `maven` replacement.
 
 Dependencies
 ------------
 
-To compile Cloak, put clojure.jar in the `lib` directory.
-
-Cloak requires rosado.math.graph and rosado.io, my helper libraries
-which are in the lib directory and available as [libs4clj][mylibs]
-from github. To run the tests you'll need test-is from
-[clojure-contrib][contrib].
+To run the tests you'll need test-is from [clojure-contrib][contrib].
 
 TODO
 ----------
