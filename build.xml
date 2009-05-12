@@ -1,33 +1,39 @@
 <project name="cloak" default="props" basedir="." xmlns:ivy='antlib:org.apache.ivy.ant'>
 
+    <description>
+	A simple build system for Clojure.
+    </description>
+
+	<!-- PROPERTIES -->
     <property name='etc.dir' location='${basedir}/etc'/>
     <property file='${etc.dir}/ivy.properties'/>
 
-  <description>
-	A simple build system for Clojure.
-  </description>
+    <property name='build.dir' location='${basedir}/build'/>
 
-	<!-- PROPERTIES -->
+    <property name='cloak.dir'     location='${basedir}/cloak'/>
+    <property name='cloak.src.dir' location='${cloak.dir}/src'/>
+    <property name='cloak.classes.dir' location='${build.dir}/cloak/classes'/>
+
 	<property name="lib.dir" location="${basedir}/lib" />
-  <property name="dist.dir" location="${basedir}/bin" />
-	<property name="build.classes.dir" location="${basedir}/classes" />
+    <property name="dist.dir" location="${basedir}/bin" />
 
-	<path id="compile.classpath">
-		<fileset dir="${lib.dir}">
-			<include name="*.jar"/>
-		</fileset>
-	</path>
+    <path id="compile.classpath">
+        <fileset dir='${lib.dir}' includes='*.jar'/>
+    </path>
 
-	<path id="clj.compile.classpath">
-    <pathelement path="${clj.dir}/clojure.jar" />
-		<path refid="compile.classpath" />
-		<path location="${basedir}" />
-		<path location="${build.classes.dir}" />
+    <path id='test.classpath'>
+        <path refid='compile.classpath'/>
+    </path>
+
+	<path id="cloak.compile.classpath">
+		<path refid="compile.classpath"/>
+		<path location="${cloak.src.dir}"/>
+		<path location="${cloak.classes.dir}"/>
 	</path>
 
 	<path id="run.classpath">
-    <path refid="compile.classpath" />
-		<path location="${build.classes.dir}" />
+        <path refid="compile.classpath"/>
+		<path location="${cloak.classes.dir}"/>
 	</path>
 
 	<target name="init" depends='getivy'>
@@ -37,7 +43,7 @@
 	<!-- TARGETS -->
 	
 	<target name="clean">
-		<delete dir="classes" />
+        <delete dir="${build.dir}"/>
 	</target>
 
     <target name='resolve' depends='getivy'>
@@ -48,10 +54,11 @@
 	<target name="compile-clojure-src"
 					description="Compile Clojure sources"
           depends="init, resolve">
+        <mkdir dir='${cloak.classes.dir}'/>
 		<java classname="clojure.lang.Compile"
-          classpath="${build}:${cljsrc}">
-			<sysproperty key="clojure.compile.path" value="${build.classes.dir}" />
-			<classpath refid="clj.compile.classpath" />
+          classpath="${cloak.classes.dir}">
+			<sysproperty key="clojure.compile.path" value="${cloak.classes.dir}" />
+			<classpath refid="cloak.compile.classpath" />
             <arg value="rosado.cloak"/>
             <arg value="rosado.cloak.actions"/>
             <arg value="rosado.cloak.main" />
@@ -64,8 +71,7 @@
           description="Compile Cloak.">
 	</target>
 	
-  <target name="run"
-					depends="">
+  <target name="run">
 		<java classname="rosado.cloak"
 					classpathref="run.classpath"
           fork="true"
@@ -77,7 +83,7 @@
   <target name="jar" depends="compile"
           description="Package compiled *.class files into a jar.">
     <mkdir dir='${dist.dir}'/>
-    <jar destfile="${dist.dir}/rosado.cloak.jar" basedir="${build.classes.dir}"/>
+    <jar destfile="${dist.dir}/rosado.cloak.jar" basedir="${cloak.classes.dir}"/>
   </target>
 
 
