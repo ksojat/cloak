@@ -5,6 +5,6 @@
 # Ivy will manage libs
 lib/
 # No need for classes dir
-classes/
+build/
 # No need for dist dir
 bin/

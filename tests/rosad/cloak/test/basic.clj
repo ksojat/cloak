@@ -1,7 +1,9 @@
+;(ns rosado.cloak.test.basic
+;  (:use clojure.contrib.test-is)
+;  (:require [rosado.cloak :as cloak]))
 (ns rosado.cloak.test.basic
-  (:use clojure.contrib.test-is)
+  (:use backtrace)
   (:require [rosado.cloak :as cloak]))
-
 
 ;; testing command line parsing
 
