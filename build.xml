@@ -9,10 +9,15 @@
     <property file='${etc.dir}/ivy.properties'/>
 
     <property name='build.dir' location='${basedir}/build'/>
+    <property name='test.dir' location='${basedir}/tests'/>
+  	<property name="lib.dir" location="${basedir}/lib" />
+    <property name="dist.dir" location="${basedir}/bin" />
 
     <property name='cloak.dir'     location='${basedir}/cloak'/>
     <property name='cloak.src.dir' location='${cloak.dir}/src'/>
     <property name='cloak.classes.dir' location='${build.dir}/cloak/classes'/>
+    <property name='cloak.jar' location='${dist.dir}/rosado.cloak.jar'/>
+    <!-- TODO: Cloak.jar property -->
 
     <property name='clj-backtrace.dir' location='${basedir}/external/clj-backtrace'/>
     <property name='clj-backtrace.src.dir' location='${clj-backtrace.dir}/src'/>
@@ -24,15 +29,17 @@
     <property name='clj-unit.classes.dir' location='${build.dir}/clj-unit/classes'/>
     <property name='clj-unit.jar' location='${build.dir}/clj-unit/clj-unit.jar'/>
 
-	<property name="lib.dir" location="${basedir}/lib" />
-    <property name="dist.dir" location="${basedir}/bin" />
-
     <path id="compile.classpath">
         <fileset dir='${lib.dir}' includes='*.jar'/>
     </path>
 
     <path id='test.classpath'>
         <path refid='compile.classpath'/>
+        <path location='${clj-unit.jar}'/>
+        <path location='${clj-backtrace.jar}'/>
+        <path location='${cloak.jar}'/>
+        <path location='${test.dir}'/>
+        <path location='${basedir}/lib/commons-io-1.4.jar'/>
     </path>
 
     <path id='clj-backtrace.compile.classpath'>
@@ -130,12 +137,21 @@
           spawn="false">
       <sysproperty key="java.library.path" path="${native.lib.dir}" />
 		</java>
-	</target>
+    </target>
+
+    <target name='test'>
+        <java
+            classname='clojure.lang.Script'
+            classpathref='test.classpath'
+            fork='true'>
+            <arg value='${test.dir}/run.clj'/>
+        </java>
+    </target>
 
   <target name="jar" depends="compile"
           description="Package compiled *.class files into a jar.">
     <mkdir dir='${dist.dir}'/>
-    <jar destfile="${dist.dir}/rosado.cloak.jar" basedir="${cloak.classes.dir}"/>
+    <jar destfile="${cloak.jar}" basedir="${cloak.classes.dir}"/>
   </target>
 
 

@@ -123,7 +123,7 @@
            (*error-handler* "Failure:" msg#)
            (throw (Exception. msg#))))
        (if (.exists f#)
-         (FileUtisl/isFileOlder o# f#)
+         (org.apache.commons.io.FileUtils/isFileOlder o# f#)
          true))))
 
 (defmacro file [file-name & rst]

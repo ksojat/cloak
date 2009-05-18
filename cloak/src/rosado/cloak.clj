@@ -159,5 +159,6 @@
   (try
    (parse-arg args)
    (catch Exception e
+     (.printStackTrace e)
      (println "\nBuild failed.\n")
      (System/exit 1))))

@@ -3,7 +3,7 @@
   (:use rosado.cloak.main)
   (:use rosado.cloak.actions))
 
-;; assumptions:  clojure.jar, clojure-contrib.jar, rosado.jar in classpath
+;; assumptions:  clojure.jar
 ;; also, classes dir must already be in your classpath (for compilation)
 
 (task :clean
