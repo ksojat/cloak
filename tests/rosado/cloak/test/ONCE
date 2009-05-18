@@ -1,0 +1,18 @@
+(ns cloak.tests.once
+  (:use rosado.cloak.main)
+  (:use rosado.cloak.actions))
+
+(def *counter-a* (ref 0))
+(def *counter-b* (ref 0))
+
+(defn increment [c]
+  (dosync (ref-set c (inc @c))))
+
+(task :a
+	  (increment *counter-a*)
+	  (println "ONCE: Doing :a"))
+
+(task :b
+	  (increment *counter-b*)
+	  (println "ONCE: Doing :b"))
+

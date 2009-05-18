@@ -1,0 +1,8 @@
+(ns cloak.tests.simple
+  (:use rosado.cloak.main)
+  (:use rosado.cloak.actions))
+
+(task :a [:b :c] (println "Doing :a"))
+(task :b [:d] (println "Doing :b"))
+(task :c [:d] (println "Doing :c"))
+(task :d (println "Doing d"))

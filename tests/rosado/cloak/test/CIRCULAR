@@ -1,0 +1,9 @@
+(ns circular-dep
+  (:use rosado.cloak.main)
+  (:use rosado.cloak.actions))
+
+(task :a [:b]
+	  (println "AAAAA"))
+
+(task :b [:a]
+	  (println "BBBBBB"))
