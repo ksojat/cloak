@@ -67,7 +67,6 @@
 	</path>
 
 	<target name="init" depends='getivy'>
-		<mkdir dir="classes" />	
 	</target>
 
 	<!-- TARGETS -->
@@ -123,6 +122,7 @@
             <arg value="rosado.cloak.main" />
             <arg value='rosado.utils'/>
             <arg value='rosado.math.graph'/>
+            <!--<arg value='rosado.cloak.anttasks'/>-->
 		</java>
 	</target>
 

@@ -57,3 +57,34 @@
   "Remove directory recursively (like 'rm -r dirname')."
   (FileUtils/deleteDirectory (File. dir)))
 
+(defn ns-decl [file]
+  (with-open [f (java.io.FileReader. file)
+              b (java.io.BufferedReader. f)
+              p (java.io.PushbackReader. b)]
+    (reduce
+      (fn [n [x & [y & _]]]
+        (if (= x 'ns) (conj n y) n))
+      []
+      (take-while (complement nil?) (repeatedly #(read p false nil))))))
+
+(defn clojure-file? [file]
+  (.endsWith (.getName file) ".clj"))
+
+(defn project-files [src-dirs]
+  (println src-dirs)
+  (filter clojure-file? (mapcat file-seq src-dirs)))
+
+(defn project-ns [src-dirs]
+  (mapcat ns-decl (project-files src-dirs)))
+
+(defn clojurec [src-dirs dest-dir]
+  ; Create destination directory.
+  (.mkdirs dest-dir)
+
+  ; Add dirs to classpath.
+  (doseq [d (conj src-dirs dest-dir)]
+    (add-classpath (.toURL d)))
+
+  ; Compile all namespaces inside the project directories.
+  (binding [*compile-path* dest-dir]
+    (doseq [n (project-ns src-dirs)] (compile n))))

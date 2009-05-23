@@ -57,8 +57,7 @@ File tasks can't be specified as targets on the command line.
 Compiling Cloak
 ---------------
 
-To compile Cloak run `ant compile` or `ant jar`. See below for
-dependencies.
+To compile Cloak run `ant compile` or `ant jar`.
 
 Compiling Clojure sources
 -------------------------
@@ -73,11 +72,6 @@ What it isn't
 -------------
 
 It's not an `ant` or `maven` replacement.
-
-Dependencies
-------------
-
-To run the tests you'll need test-is from [clojure-contrib][contrib].
 
 TODO
 ----------

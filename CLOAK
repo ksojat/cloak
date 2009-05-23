@@ -6,6 +6,36 @@
 ;; assumptions:  clojure.jar
 ;; also, classes dir must already be in your classpath (for compilation)
 
+;(import '(java.io File)
+;        '(org.apache.tools.ant Project NoBannerLogger)
+;        '(org.apache.tools.ant.types Path))
+
+(import '(java.io File))
+
+(defn path [& segments]
+  (reduce (fn [base seg] (if base (File. base seg) (File. seg))) segments))
+
+(def props
+  {:dest (path "build" "cloak")
+   :src  (path "cloak" "src")})
+
+;(def +ant-logger+
+;  (doto (NoBannerLogger.)
+;    (.setMessageOutputLevel Project/MSG_INFO)
+;    (.setOutputPrintStream System/out)
+;    (.setErrorPrintStream System/err)))
+
+;(def +ant-project+
+;  (doto (Project.)
+;    (.init)
+;    (.setBaseDir (File. (System/getProperty "user.home")))
+;    (.addTaskDefinition "clojurec" rosado.cloak.anttasks.ClojureCompile)
+;    (.addBuildListener +ant-logger+)))
+
+(task :compile
+  "Compile Cloak."
+  (clojurec [(:src props)] (:dest props)))
+
 (task :clean
       "Removes the 'classes' directory "
       (when (exists? "classes/rosado")

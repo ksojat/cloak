@@ -13,5 +13,8 @@
             <artifact name='commons-io'/>
             <exclude org='junit'/>
         </dependency>
+        <dependency org='org.apache.ant' name='ant' rev='1.7.1'>
+            <artifact name='ant'/>
+        </dependency>
     </dependencies>
 </ivy-module>
