@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<!--
+    Copyright (c) Krešimir Šojat, 2009. All rights reserved.  The use
+    and distribution terms for this software are covered by the Eclipse
+    Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
+    which can be found in the file epl-v10.html at the root of this
+    distribution.  By using this software in any fashion, you are
+    agreeing to be bound by the terms of this license.  You must not
+    remove this notice, or any other, from this software.
+-->
+
+<ivy-module version='2.0'>
+    <info
+        organisation='ch.ethz'
+        module='ssh2'
+        revision='build210'>
+        <license name='BSD'/>
+        <description homepage='http://www.ganymed.ethz.ch/ssh2/'>
+            Ganymed SSH-2 for Java is a library which implements the SSH-2 protocol in pure Java.
+        </description>
+    </info>
+
+    <configurations>
+        <conf name='default' description='Default configuration.'/>
+    </configurations>
+
+    <publications>
+        <artifact name='ssh2' conf='default'/>
+    </publications>
+</ivy-module>

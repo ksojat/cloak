@@ -16,5 +16,10 @@
         <dependency org='org.apache.ant' name='ant' rev='1.7.1'>
             <artifact name='ant'/>
         </dependency>
+        <dependency org='org.apache.maven.scm' name='maven-scm' rev='1.2'/>
+        <dependency org='commons-cli' name='commons-cli' rev='1.1'>
+            <artifact name='commons-cli'/>
+        </dependency>
+        <dependency org='ch.ethz' name='ssh2' rev='build210'/>
     </dependencies>
 </ivy-module>
