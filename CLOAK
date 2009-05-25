@@ -1,16 +1,9 @@
 (ns rosado.cloak-build
+  (:import (java.io File))
   (:require [rosado.cloak :as cloak])
+  (:use [rosado.cloak.ant :only [ant]])
   (:use rosado.cloak.main)
   (:use rosado.cloak.actions))
-
-;; assumptions:  clojure.jar
-;; also, classes dir must already be in your classpath (for compilation)
-
-;(import '(java.io File)
-;        '(org.apache.tools.ant Project NoBannerLogger)
-;        '(org.apache.tools.ant.types Path))
-
-(import '(java.io File))
 
 (defn path [& segments]
   (reduce (fn [base seg] (if base (File. base seg) (File. seg))) segments))
@@ -19,18 +12,8 @@
   {:dest (path "build" "cloak")
    :src  (path "cloak" "src")})
 
-;(def +ant-logger+
-;  (doto (NoBannerLogger.)
-;    (.setMessageOutputLevel Project/MSG_INFO)
-;    (.setOutputPrintStream System/out)
-;    (.setErrorPrintStream System/err)))
-
-;(def +ant-project+
-;  (doto (Project.)
-;    (.init)
-;    (.setBaseDir (File. (System/getProperty "user.home")))
-;    (.addTaskDefinition "clojurec" rosado.cloak.anttasks.ClojureCompile)
-;    (.addBuildListener +ant-logger+)))
+(task :anttest
+  (ant :echo {:message "Hi"}))
 
 (task :compile
   "Compile Cloak."

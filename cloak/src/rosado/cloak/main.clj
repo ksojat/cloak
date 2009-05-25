@@ -33,8 +33,10 @@
 (def *current-task*)                    ;holds keyword of currently executed task
 (def *verbose* false)
 (def *try-only* false)
-(def *notify-handler* println)
-(def *error-handler* println)
+
+; TODO: Yes, i will add them to +settins+, so they can be reconfigured
+(def *notify-handler* println); TODO: Can i merge this with error-handler in some concept of logger
+(def *error-handler* println); TODO: Why default can't be task-error from rosado.cloak?
 
 (defmulti to-task class)
 
@@ -88,13 +90,18 @@
 
 (defmethod parse-task ::Dependencies [mp elems]
   (assoc mp :deps (first elems)))
+;(defmethod parse-task ::Dependencies [mp [d & _]]
+;  (assoc mp :deps d))
 
 (defmethod parse-task java.lang.String [mp elems]
   (assoc mp :desc (first elems)))
+;(defmethod parse-task String [mp [d & _]]
+;  (assoc mp :deps d))
 
 (defmethod parse-task ::Actions [mp elems]
   (assoc mp :actions `(fn [] (do ~@elems))))
 
+; TODO: Do i need this?
 (defmethod parse-task nil [mp elems]    ;dummy task, no actions
   (assoc mp :actions `(fn[] nil)))
 
@@ -130,6 +137,7 @@
   (fail-if-defined file-name)
   (let [task (to-task-struct rst)
         fnames (doall (filter #(isa? (class %) String) (:deps task)))
+        ;fnames (filter string? (:deps task))
         pre-check  `(fn [] (some ~(pre-check-fn file-name fnames) (list ~@fnames)))
         ftask (assoc task :pre-check pre-check)]
     `(save-task ~file-name ~ftask)))

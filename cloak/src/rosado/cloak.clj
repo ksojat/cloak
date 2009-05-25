@@ -18,12 +18,18 @@
   (:use rosado.cloak.main)
   (:gen-class))
 
+(defn notice [& args]
+  (println (apply str " NOTICE: " args)))
+
+(defn error [& args]
+  (println (apply str " ERROR: " args)))
+
 (def +settings+
-  (atom {:opts     {}
+  (atom {:logger   {:error error, :notice notice}
          :file     "CLOAK"
          :describe false
-         :default  :default
-         :targets  []
+         :verbose  false
+         :targets  [:default]
          :cwd      (System/getProperty "user.dir" "")
          :bin      (System/getProperty "cloak.bin" "cloak")
          :home     (System/getProperty "cloak.home" "")})); TODO: Default to ~/.cloak
@@ -47,12 +53,6 @@
     (.parse (GnuParser.) cli-options (into-array command-line-arguments))
     (catch UnrecognizedOptionException e
       (cli-help))))
-
-(defn notification [& args]
-  (println (apply str " NOTIFICATION:" args)))
-
-(defn error [& args]
-  (println (apply str " ERROR:" args)))
 
 (defn task-error
   "Error handler function used for task failures."
@@ -82,7 +82,7 @@
       (throw (Exception. "Specified task is not defined."))))
   (doseq [kw kwords]
     (try
-     (binding [*error-handler* task-error]
+     (binding [*error-handler* task-error]; TODO: Why i can't just send in project settings?
        (execute-task kw))
      (catch Exception e
        (error (.getMessage e))
@@ -95,14 +95,12 @@
   (do
     (doseq [t (for [key (keys taskmap)]
                 (assoc (@*tasks* key) :name key))]
-      (print (format " %1$-16s" (if (keyword? (t :name))
-                                  (name (t :name))
-                                  (t :name))))
+      (printf " %1$-16s" (if (keyword? (t :name)) (name (t :name)) (t :name)))
       (if (t :desc)
         (println (t :desc))
         (newline)))))
 
-(defn run-program [{:keys [file describe default targets] :as settings}]
+(defn run-program [{:keys [file describe targets] :as settings}]
   (load-tasks (.getAbsolutePath (File. (:cwd settings) file)))
   (try
     (init-tasks)
@@ -111,9 +109,9 @@
       (error (.getMessage e))
       (throw e)))
   (try
-    (cond describe (print-desc @*tasks*)
-          (empty? targets) (run-tasks [default])
-          :else (run-tasks targets))))
+    (if describe
+      (print-desc @*tasks*)
+      (run-tasks targets))))
 
 (defn generate-ant-facade [file]
   (println "This option will be implemented later."))
@@ -143,7 +141,7 @@
       (swap! +settings+ assoc :verbose true))
 
     (when (has-option? "queue")
-      (swap! +settings+ update-in [:targets] concat
+      (swap! +settings+ assoc :targets
         (map keyword (seq (.getOptionValues cmd "queue")))))
 
     (println @+settings+)
