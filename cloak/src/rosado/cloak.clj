@@ -10,46 +10,67 @@
 ;; remove this notice, or any other, from this software.
 
 (ns rosado.cloak
-  (:import (java.lang System))
+  (:import
+    (java.lang System)
+    (java.io File)
+    (org.apache.commons.cli
+      Option Options GnuParser HelpFormatter UnrecognizedOptionException))
   (:use rosado.cloak.main)
   (:gen-class))
 
-(def *default-cloak-file* "CLOAK")
-(def *default-task* :default)
-(def *describe-only* false)
-(def *target-queue* [])
-(def *CWD* (System/getProperty "user.dir"))
-(def path-sep #^java.lang.String (java.io.File/separator))
-
 (def +settings+
-  (atom {:cwd  (System/getProperty "user.dir" "")
-         :bin  (System/getProperty "cloak.bin" "cloak")
-         :home (System/getProperty "cloak.home" "")})); TODO: Default to ~/.cloak
+  (atom {:opts     {}
+         :file     "CLOAK"
+         :describe false
+         :default  :default
+         :targets  []
+         :cwd      (System/getProperty "user.dir" "")
+         :bin      (System/getProperty "cloak.bin" "cloak")
+         :home     (System/getProperty "cloak.home" "")})); TODO: Default to ~/.cloak
+
+(def cli-options
+  (doto (Options.)
+    (.addOption "h" "help"     false "Print help")
+    (.addOption (doto (Option. "q" "queue" true "Add task to execution queue")
+                  (.setArgs Option/UNLIMITED_VALUES)))
+    (.addOption "d" "describe" false "Describe tasks")
+    (.addOption "f" "file"     true  "Use taskfile instead of CLOAK")
+    (.addOption "t" "try"      false "Run Cloak but don't execute any actions (try)")
+    (.addOption "a" "ant"      true  "Generate Ant build facade")))
+
+(defn cli-help []
+  (.printHelp (HelpFormatter.) (:bin @+settings+) cli-options)
+  (System/exit 0))
+
+(defn cli-parse [command-line-arguments]
+  (try
+    (.parse (GnuParser.) cli-options (into-array command-line-arguments))
+    (catch UnrecognizedOptionException e
+      (cli-help))))
 
 (defn notification [& args]
-  (apply println (cons " NOTIFICATION:" args)))
+  (println (apply str " NOTIFICATION:" args)))
 
 (defn error [& args]
-  (apply println (cons " ERROR:" args)))
+  (println (apply str " ERROR:" args)))
 
 (defn task-error
   "Error handler function used for task failures."
   [& args]
-  (apply println (cons (str " " \[ (name *current-task*) \]) args)))
+  (println (apply str " [" (name *current-task*) " ]" args)))
 
 (defn- load-tasks
-  "Loads tasks from file (*default-cloak-file*) and creates
-  task-table for use by other fns"
-  []
+  "Loads tasks from input file and creates task-table for use by other fns"
+  [file]
   (clear-tasks!)
   (try
-   (load-file (str *CWD* path-sep *default-cloak-file*))
-   (catch java.io.FileNotFoundException e
-     (error "Can't find cloak file" (str \" *default-cloak-file* \"))
-     (throw e))
-   (catch Exception e
-     (error "Loading cloak file" (str \" *default-cloak-file* \") "failed.")
-     (throw e))))
+    (load-file file)
+    (catch java.io.FileNotFoundException e
+      (error (format "Can't find cloak file \"%s\"." file))
+      (throw e))
+    (catch Exception e
+      (error (format "Loading cloak file \"%s\" failed." file))
+      (throw e))))
 
 (defn run-tasks
   "Run given tasks. Aborts on first failed task."
@@ -81,84 +102,53 @@
         (println (t :desc))
         (newline)))))
 
-(defn run-program []
-  (when *default-cloak-file*
-    (load-tasks))                ;lets try to load the tasks from file
+(defn run-program [{:keys [file describe default targets] :as settings}]
+  (load-tasks (.getAbsolutePath (File. (:cwd settings) file)))
   (try
-   (init-tasks)
-   (catch Exception e
-     (error "Error initializing tasks")
-     (error (.getMessage e))
-     (throw e)))
-  ;; perform actions
+    (init-tasks)
+    (catch Exception e
+      (error "Error initializing tasks")
+      (error (.getMessage e))
+      (throw e)))
   (try
-   (cond *describe-only* (print-desc @*tasks*)
-         (empty? *target-queue*) (run-tasks [*default-task*])
-         :else (run-tasks *target-queue*))))
+    (cond describe (print-desc @*tasks*)
+          (empty? targets) (run-tasks [default])
+          :else (run-tasks targets))))
 
-(def #^{:private true}
-     cmd-line-opts {"-d" "describe tasks"
-                    "-f taskfile" "use taskfile instad of CLOAK"
-                    "-t" "run cloak, but don't execute actions (try)"
-                    "-h" "print help"})
-
-(defn print-help []
-  (println " Cloak. A simple automation tool.\n")
-  (doseq [[opt des] cmd-line-opts]
-    (printf " %1$-15s %2$s\n" opt des)))
-
-(defn print-usage []
-  (let [bin (:bin @+settings+)]
-    (printf "usage: %s [options] [task-name]\n" bin)
-    (printf "try '%s -h' for more information.\n" bin)))
-
-;; parses command line arguments
-(defmulti parse-arg first)
-
-(defmethod parse-arg "-d" [args]
-  (binding [*describe-only* true]
-    (parse-arg (next args))))
-
-(defmethod parse-arg "-t" [args]
-  (notification "The actions won't be performed (option -t supplied).")
-  (when (some #{"-h" "-d"} (next args))
-    (print-usage)
-    (throw (Exception. "Wrong parameters.")))
-  (binding [*try-only* true]
-    (parse-arg (next args))))
-
-(defmethod parse-arg "-h" [args]
-  (if (or (next args) *describe-only*)
-    (do
-      (print-usage)
-      (throw (Exception. "Wrong parameters.")))
-    (print-help)))
-
-(defmethod parse-arg "-f" [args]
-  (when-not (second args)
-    (print-usage)
-    (throw (Exception. "Missing file argument (-f ...)")))
-  (let [cfname (second args)
-        rargs (nnext args)]
-    (if (some #{"-h"} rargs)          ;those args don't make sense now
-      (do
-        (print-usage)
-        (throw (Exception. "Wrong parameters.")))
-      (binding [*default-cloak-file* cfname]
-        (parse-arg rargs)))))
-
-(defmethod parse-arg :default [args]
-  (let [tnames (vec (map keyword args))] ;remaining params are task names
-    (binding [*target-queue* tnames]
-      (run-program))))
-
-(defmethod parse-arg nil [args]
-  (run-program))
+(defn generate-ant-facade [file]
+  (println "This option will be implemented later."))
 
 (defn -main [& args]
-  (try
-   (parse-arg args)
-   (catch Exception e
-     (.printStackTrace e)
-     (println "\nBuild failed.\n")
-     (System/exit 1))))
+  (let [cmd (cli-parse (or args (list "")))
+        has-option? #(.hasOption cmd %)
+        get-option  #(.getOptionValue cmd %)]
+
+    (when (has-option? "help")
+      (cli-help))
+
+    (when (has-option? "ant")
+      (generate-ant-facade (get-option "ant"))
+      (System/exit 0))
+
+    (when (has-option? "describe")
+      (swap! +settings+ assoc :describe true))
+
+    (when (has-option? "file")
+      (swap! +settings+ assoc :file (get-option "file")))
+
+    (when (has-option? "try")
+      (swap! +settings+ assoc :try true))
+
+    (when (has-option? "verbose")
+      (swap! +settings+ assoc :verbose true))
+
+    (when (has-option? "queue")
+      (swap! +settings+ update-in [:targets] concat
+        (map keyword (seq (.getOptionValues cmd "queue")))))
+
+    (println @+settings+)
+    (run-program @+settings+)))
+
+;; Standard run
+(when (and (not *compile-files*) (System/getProperty "cloak.runmain"))
+  (-main *command-line-args*))
