@@ -1,0 +1,22 @@
+#!/bin/sh
+
+BREAK_CHARS="(){}[],^%$#@\"\";:''|\\"
+COMPLETITIONS="%PROJECT_COMPLETITIONS%"
+RLWRAP='rlwrap --remember -c -b $BREAK_CHARS'
+
+CP='%PROJECT_CLASSPATH%'
+
+if [ -f $COMPLETITIONS ]; then
+    RLWRAP="$RLWRAP -f $COMPLETITIONS"
+else
+    echo "Warning: Can't find \"$COMPLETITIONS\"."
+fi
+
+if which rlwrap; then
+    CMD="$RLWRAP java"
+else
+    CMD="java"
+    echo "Warning: Can't find rlwrap"
+fi
+
+$CMD -cp "$CP" clojure.main -r

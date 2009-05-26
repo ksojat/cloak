@@ -9,11 +9,26 @@
   (reduce (fn [base seg] (if base (File. base seg) (File. seg))) segments))
 
 (def props
-  {:dest (path "build" "cloak")
-   :src  (path "cloak" "src")})
+  {:cp    "lib/*:cloak/src:cloak/resources"
+   :completitons ".completitions"
+   :dest  (path "build" "cloak")
+   :src   (path "cloak" "src")})
 
 (task :anttest
   (ant :echo {:message "Hi"}))
+
+(task :repl-rlwrap
+  (clojure-repl (File. "clojure-rlwrap.sh") :rlwrap props)
+  (println "manual step: chmod +x clojure-rlwrap.sh"))
+
+(task :repl-jline
+  (clojure-repl (File. "clojure-jline.sh") :jline props)
+  (println "There is no jline in cloak.")
+  (println "manual step: chmod +x clojure-jline.sh"))
+
+(task :repl-standard
+  (clojure-repl (File. "clojure-standard.sh") :standard props)
+  (println "manual step: chmod +x clojure-standard.sh"))
 
 (task :compile
   "Compile Cloak."

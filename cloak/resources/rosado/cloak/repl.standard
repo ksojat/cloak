@@ -1,0 +1,6 @@
+#!/bin/sh
+
+CMD=java
+CP='%PROJECT_CLASSPATH%'
+
+$CMD -cp "$CP" clojure.main -r

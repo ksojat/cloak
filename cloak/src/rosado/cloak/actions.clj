@@ -13,8 +13,9 @@
 (ns rosado.cloak.actions
   (:use rosado.utils)
   (:import
+    (clojure.lang RT)
     (java.io File FileInputStream FileOutputStream)
-    (org.apache.commons.io FileUtils)))
+    (org.apache.commons.io IOUtils FileUtils)))
 
 (defn sh
   "Performs a shell command."
@@ -88,3 +89,48 @@
   ; Compile all namespaces inside the project directories.
   (binding [*compile-path* dest-dir]
     (doseq [n (project-ns src-dirs)] (compile n))))
+
+(defn resource-url [res]
+  (when res (.getResource (RT/baseLoader) res)))
+
+(defn resource-as-stream [res]
+  (when res (.getResourceAsStream (RT/baseLoader) res)))
+
+(defn resource-as-string [res]
+  (IOUtils/toString (resource-as-stream res)))
+
+(defn resource-as-file [res]
+  (when-let [res (resource-url res)] (.getFile res)))
+
+(defn repl-as-string [type]
+  (resource-as-string (format "rosado/cloak/repl.%s" type)))
+
+(defn clojure-repl [#^File file type {cp :cp, completitions :completitions}]
+  (if (#{:standard :rlwrap :jline} type)
+    (FileUtils/writeStringToFile file
+      (-> (repl-as-string (name type))
+        (.replaceAll "%PROJECT_COMPLETITIONS%" completitions)
+        (.replaceAll "%PROJECT_CLASSPATH%"     cp)))
+    (throw (Exception. (str "Unknown repl type: " type)))))
+
+;(defn clojure-repl [file type {cp :cp, completitions :completitions}]
+;  (condp = type
+;    :standard
+;      (let [s (IOUtils/toString (resource-as-stream "rosado/cloak/repl.standard"))
+;            repl (-> s
+;                   (.replaceAll "%PROJECT_COMPLETITIONS%" completitions)
+;                   (.replaceAll "%PROJECT_CLASSPATH%"     cp))]
+;        (FileUtils/writeStringToFile file repl))
+
+;    :rlwrap
+;      (let [s (IOUtils/toString (resource-as-stream "rosado/cloak/repl.rlwrap"))
+;            repl (-> s
+;                  (.replaceAll "%PROJECT_COMPLETITIONS%" completitions)
+;                  (.replaceAll "%PROJECT_CLASSPATH%"     cp))]
+;        (FileUtils/writeStringToFile file repl))
+;
+;    :jline
+;      (println "Creating jline based repl.")
+
+    ; Fail
+;    (throw (Exception. (str "Unknown repl type: " type)))))

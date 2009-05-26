@@ -15,6 +15,7 @@
 
     <property name='cloak.dir'     location='${basedir}/cloak'/>
     <property name='cloak.src.dir' location='${cloak.dir}/src'/>
+    <property name='cloak.resources.dir' location='${cloak.dir}/resources'/>
     <property name='cloak.classes.dir' location='${build.dir}/cloak/classes'/>
     <property name='cloak.jar' location='${dist.dir}/rosado.cloak.jar'/>
     <!-- TODO: Cloak.jar property -->
@@ -151,7 +152,11 @@
   <target name="jar" depends="compile"
           description="Package compiled *.class files into a jar.">
     <mkdir dir='${dist.dir}'/>
-    <jar destfile="${cloak.jar}" basedir="${cloak.classes.dir}"/>
+    <!--<jar destfile="${cloak.jar}" basedir="${cloak.classes.dir}"/>-->
+    <jar destfile='${cloak.jar}'>
+        <fileset dir='${cloak.classes.dir}'/>
+        <fileset dir='${cloak.resources.dir}'/>
+    </jar>
   </target>
 
 

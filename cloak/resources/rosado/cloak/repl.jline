@@ -1,0 +1,5 @@
+#!/bin/sh
+
+CP="%PROJECT_CLASSPATH%"
+
+java -cp "$CP" jline.ConsoleRunner clojure.main -r
