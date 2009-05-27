@@ -124,6 +124,7 @@
             <arg value='rosado.utils'/>
             <arg value='rosado.math.graph'/>
             <arg value='rosado.cloak.ant'/>
+            <arg value='rosado.cloak.ivy'/>
 		</java>
 	</target>
 

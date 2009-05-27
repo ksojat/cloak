@@ -72,11 +72,11 @@
   (.endsWith (.getName file) ".clj"))
 
 (defn project-files [src-dirs]
-  (println src-dirs)
   (filter clojure-file? (mapcat file-seq src-dirs)))
 
 (defn project-ns [src-dirs]
-  (mapcat ns-decl (project-files src-dirs)))
+  (filter (complement nil?)
+    (mapcat ns-decl (project-files src-dirs))))
 
 (defn clojurec [src-dirs dest-dir]
   ; Create destination directory.
@@ -105,32 +105,41 @@
 (defn repl-as-string [type]
   (resource-as-string (format "rosado/cloak/repl.%s" type)))
 
+(defn replace-tokens [s tokens-map]
+  (reduce
+    (fn [s [k v]]
+      (.replaceAll s k (or v k)))
+    s tokens-map))
+
+(defn string-to-file [#^File f #^String s]
+  (FileUtils/writeStringToFile f s))
+
 (defn clojure-repl [#^File file type {cp :cp, completitions :completitions}]
   (if (#{:standard :rlwrap :jline} type)
-    (FileUtils/writeStringToFile file
-      (-> (repl-as-string (name type))
-        (.replaceAll "%PROJECT_COMPLETITIONS%" completitions)
-        (.replaceAll "%PROJECT_CLASSPATH%"     cp)))
+    (string-to-file file
+      (replace-tokens (repl-as-string (name type))
+        {"%PROJECT_COMPLETITIONS%" completitions
+         "%PROJECT_CLASSPATH%"     cp}))
     (throw (Exception. (str "Unknown repl type: " type)))))
 
-;(defn clojure-repl [file type {cp :cp, completitions :completitions}]
-;  (condp = type
-;    :standard
-;      (let [s (IOUtils/toString (resource-as-stream "rosado/cloak/repl.standard"))
-;            repl (-> s
-;                   (.replaceAll "%PROJECT_COMPLETITIONS%" completitions)
-;                   (.replaceAll "%PROJECT_CLASSPATH%"     cp))]
-;        (FileUtils/writeStringToFile file repl))
+(defn project-publics [src-dirs]
+  (filter (complement nil?)
+    (mapcat
+      (fn [n]
+        (when-let [n (find-ns n)]
+          (keys (ns-publics n))))
+      (project-ns src-dirs))))
 
-;    :rlwrap
-;      (let [s (IOUtils/toString (resource-as-stream "rosado/cloak/repl.rlwrap"))
-;            repl (-> s
-;                  (.replaceAll "%PROJECT_COMPLETITIONS%" completitions)
-;                  (.replaceAll "%PROJECT_CLASSPATH%"     cp))]
-;        (FileUtils/writeStringToFile file repl))
-;
-;    :jline
-;      (println "Creating jline based repl.")
+(def standard-publics
+  (mapcat
+    #(keys (ns-publics (find-ns %)))
+    '(clojure.core clojure.set clojure.xml clojure.zip)))
 
-    ; Fail
-;    (throw (Exception. (str "Unknown repl type: " type)))))
+(defn clojure-completitions [src-dirs #^File dest-file]
+  ; Add dirs to classpath.
+  (doseq [d src-dirs]
+    (add-classpath (.toURL d)))
+
+  (let [publics (concat standard-publics (project-publics src-dirs))]
+    (string-to-file dest-file
+      (apply str (interleave publics (repeat "\n"))))))

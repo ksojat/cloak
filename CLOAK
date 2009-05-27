@@ -10,14 +10,17 @@
 
 (def props
   {:cp    "lib/*:cloak/src:cloak/resources"
-   :completitons ".completitions"
+   :completitions ".completitions"
    :dest  (path "build" "cloak")
    :src   (path "cloak" "src")})
 
 (task :anttest
   (ant :echo {:message "Hi"}))
 
-(task :repl-rlwrap
+(task :completitions
+  (clojure-completitions [(:src props)] (File. (:completitions props))))
+
+(task :repl-rlwrap [:completitions]
   (clojure-repl (File. "clojure-rlwrap.sh") :rlwrap props)
   (println "manual step: chmod +x clojure-rlwrap.sh"))
 
