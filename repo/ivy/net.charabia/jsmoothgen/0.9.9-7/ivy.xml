@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<!--
+    Copyright (c) Krešimir Šojat, 2009. All rights reserved.  The use
+    and distribution terms for this software are covered by the Eclipse
+    Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
+    which can be found in the file epl-v10.html at the root of this
+    distribution.  By using this software in any fashion, you are
+    agreeing to be bound by the terms of this license.  You must not
+    remove this notice, or any other, from this software.
+-->
+
+<ivy-module version='2.0'>
+    <info
+        organisation='net.charabia'
+        module='jsmoothgen'
+        revision='0.9.9-7'>
+        <license
+            name='GPL/LGPL'
+            url='http://jsmooth.sourceforge.net/license.php'/>
+        <description homepage='http://jsmooth.sourceforge.net/index.php'>
+            JSmooth is a Java Executable Wrapper.
+        </description>
+    </info>
+
+    <configurations>
+        <conf name='default' description='Default configuration.'/>
+    </configurations>
+
+    <publications>
+        <artifact name='jsmoothgen'/>
+        <artifact name='jsmoothgen-ant'/>
+    </publications>
+
+    <dependencies>
+        <dependency org='org.apache.ant' name='ant' rev='1.7.1'>
+            <artifact name='ant'/>
+        </dependency>        
+    </dependencies>
+</ivy-module>

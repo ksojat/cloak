@@ -21,5 +21,6 @@
             <artifact name='commons-cli'/>
         </dependency>
         <dependency org='ch.ethz' name='ssh2' rev='build210'/>
+        <dependency org='net.charabia' name='jsmoothgen' rev='0.9.9-7'/>
     </dependencies>
 </ivy-module>
