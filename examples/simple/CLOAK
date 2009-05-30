@@ -1,0 +1,29 @@
+(ns build
+  (:import (java.io File))
+  (:requre [rosado.cloak :as cloak])
+  (:use
+    (rosado.cloak main actions)))
+
+(task :completitions
+  (println "Generate completitions for this project"))
+
+(task :repl [:completitions]
+  (println "Generating repl"))
+
+(task :apidoc
+  (println "Generate api docs"))
+
+(task :aot
+  (println "Generate classes"))
+
+(test :jar [:aot]
+  (println "Generate jar file"))
+
+(task :dist [:apidoc :jar]
+  (println "Generate final distribution"))
+
+(task :clean
+  (println "Clean project"))
+
+(task :test [:jar]
+  (println "Run project tests"))
