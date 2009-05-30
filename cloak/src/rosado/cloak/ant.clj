@@ -7,10 +7,8 @@
 ;; remove this notice, or any other, from this software.
 
 (ns rosado.cloak.ant
-  (:import (clojure.lang Reflector)
-           (java.io File)
-           (java.beans Introspector)
-           (org.apache.tools.ant Project NoBannerLogger)))
+  (:import (java.io File)
+           (org.apache.tools.ant Project NoBannerLogger UnknownElement)))
 
 (defn standard-logger []
   (doto (NoBannerLogger.)
@@ -26,21 +24,25 @@
 
 ; TODO: Register this standard-project thing to +settings+
 (def +project+
-  (standard-project (File. (java.lang.System/getProperty "user.home"))))
+  (standard-project (File. (java.lang.System/getProperty "user.dir"))))
 
-(defn set-property [task key value]
-  (let [w (.getWriteMethod
-            (first
-              (filter
-                #(= (name key) (.getName %))
-                (.getPropertyDescriptors (Introspector/getBeanInfo (class task))))))]
-    (Reflector/invokeInstanceMethod task (.getName w) (into-array [value]))))
-
-(defn ant [task & specs]
-  (let [t  (.createTask +project+ (name task))
-        ps (when (map? (first specs)) (first specs))]
-    (.init t)
-    (.setProject t +project+)
+(defn unknown-element [el-name & specs]
+  (let [ue (doto (UnknownElement. (name el-name))
+             (.setProject +project+))
+        w  (.getRuntimeConfigurableWrapper ue)
+        [ps cs] (if (map? (first specs))
+                  [(first specs) (next specs)] [nil specs])]
     (doseq [[k v] ps]
-      (set-property t k v))
-    (.execute t)))
+      (.setAttribute w (name k) v))
+
+    (doseq [c cs]
+      (let [x (apply unknown-element c)]
+        (.addChild ue x)
+        (.addChild w (.getRuntimeConfigurableWrapper x))))
+
+    (.maybeConfigure ue)
+    ue))
+
+(defn ant [& args]
+  (let [t (apply unknown-element args)]
+    (.. t getRealThing execute)))

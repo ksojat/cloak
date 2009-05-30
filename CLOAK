@@ -46,13 +46,14 @@
       "Creates a jar file with Cloak's sources"
       (sh "jar cf bin/rosado.cloak.jar rosado" :dofail))
 
-(task :jar ["bin/rosado.cloak.jar"]
-      "Creates a jar file with compiled Cloak class files.")
+(task :jar
+  "Create a jar file with compiled Cloak class files."
 
-(file "bin/rosado.cloak.jar" ["classes/rosado"]
-      (when-not (exists? "bin")
-        (mkdir "bin"))
-      (sh "jar cf bin/rosado.cloak.jar -C classes rosado" :dofail))
+  (when-not (exists? "bin")
+    (mkdir "bin"))
+  (ant :jar {:destfile "bin/cloak.jar"}
+    [:fileset {:dir "build/cloak/classes"}]
+    [:fileset {:dir "cloak/resources"}]))
 
 ; TODO: Restore later, no global bindings
 ;(task :test
