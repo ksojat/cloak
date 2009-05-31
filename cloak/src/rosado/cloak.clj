@@ -26,7 +26,7 @@
 
 (def +settings+
   (atom {:logger   {:error error, :notice notice}
-         :file     "CLOAK"
+         :file     ["cloakfile" "cloakfile.clj"]
          :describe false
          :verbose  false
          :targets  [:default]
@@ -100,8 +100,13 @@
         (println (t :desc))
         (newline)))))
 
-(defn run-program [{:keys [file describe targets] :as settings}]
-  (load-tasks (.getAbsolutePath (File. (:cwd settings) file)))
+(defn find-cloakfile [{file :file cwd :cwd}]
+  (first
+    (filter #(.exists %)
+      (map #(File. (File. cwd) %) file))))
+
+(defn run-program [{:keys [describe targets] :as settings}]
+  (load-tasks (.getAbsolutePath (find-cloakfile settings)))
   (try
     (init-tasks)
     (catch Exception e
@@ -132,7 +137,7 @@
       (swap! +settings+ assoc :describe true))
 
     (when (has-option? "file")
-      (swap! +settings+ assoc :file (get-option "file")))
+      (swap! +settings+ assoc :file [(get-option "file")]))
 
     (when (has-option? "try")
       (swap! +settings+ assoc :try true))
