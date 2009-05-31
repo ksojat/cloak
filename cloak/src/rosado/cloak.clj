@@ -144,7 +144,6 @@
       (swap! +settings+ assoc :targets
         (map keyword (seq (.getOptionValues cmd "queue")))))
 
-    (println @+settings+)
     (run-program @+settings+)))
 
 ;; Standard run

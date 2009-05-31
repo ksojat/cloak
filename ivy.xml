@@ -13,14 +13,17 @@
             <artifact name='commons-io'/>
             <exclude org='junit'/>
         </dependency>
-        <dependency org='org.apache.ant' name='ant' rev='1.7.1'>
+        <dependency org='org.apache.ant' name='ant' rev='1.6.2'>
             <artifact name='ant'/>
         </dependency>
+        <dependency org='org.apache.ivy' name='ivy' rev='2.1.0-rc1'/>
         <dependency org='org.apache.maven.scm' name='maven-scm' rev='1.2'/>
         <dependency org='commons-cli' name='commons-cli' rev='1.1'>
             <artifact name='commons-cli'/>
         </dependency>
         <dependency org='ch.ethz' name='ssh2' rev='build210'/>
         <dependency org='net.charabia' name='jsmoothgen' rev='0.9.9-7'/>
+
+        <conflict manager='latest-revision'/>
     </dependencies>
 </ivy-module>

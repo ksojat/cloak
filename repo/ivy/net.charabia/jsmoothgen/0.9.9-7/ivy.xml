@@ -33,8 +33,8 @@
     </publications>
 
     <dependencies>
-        <dependency org='org.apache.ant' name='ant' rev='1.7.1'>
+        <dependency org='org.apache.ant' name='ant' rev='1.6.2'>
             <artifact name='ant'/>
-        </dependency>        
+        </dependency>
     </dependencies>
 </ivy-module>

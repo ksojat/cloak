@@ -78,7 +78,7 @@
 
     <target name='resolve' depends='getivy'>
         <ivy:configure file='${basedir}/ivysettings.xml'/>
-        <ivy:retrieve conf='default' pattern='${lib.dir}/[artifact]-[revision].[ext]'/>
+        <ivy:retrieve conf='default'/>
     </target>
 
     <target name='compile-external'>
