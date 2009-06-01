@@ -6,6 +6,14 @@
 ;; agreeing to be bound by the terms of this license.  You must not
 ;; remove this notice, or any other, from this software.
 
-(ns rosado.cloak.ivy)
+(ns rosado.cloak.ivy
+  (:require [rosado.cloak.core :as core]))
+
+(defn create-settings []
+  (println "Create IvySettings"))
+
+(core/on :core/init
+  (fn [build]
+    (swap! build assoc ::settings (create-settings))))
 
 

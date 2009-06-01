@@ -7,6 +7,7 @@
 ;; remove this notice, or any other, from this software.
 
 (ns rosado.cloak.ant
+  (:require [rosado.cloak.core :as core])
   (:import (java.io File)
            (org.apache.tools.ant Project NoBannerLogger UnknownElement)))
 
@@ -25,6 +26,11 @@
 ; TODO: Register this standard-project thing to +settings+
 (def +project+
   (standard-project (File. (java.lang.System/getProperty "user.dir"))))
+
+(core/on :core/init
+  (fn [build]
+    (let [cwd (:cwd @build)]
+      (swap! build assoc ::project (standard-project (File. cwd))))))
 
 (defn unknown-element [el-name & specs]
   (let [ue (doto (UnknownElement. (name el-name))

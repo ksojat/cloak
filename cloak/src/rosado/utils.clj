@@ -10,20 +10,8 @@
 ;; remove this notice, or any other, from this software.
 
 (ns rosado.utils
-  (:import (java.io InputStreamReader BufferedReader))
+  (:import (org.apache.commons.io IOUtils))
   (:import (java.util Collections Arrays)))
-
-(defn read-all
-  "Returns a string read from input stream."
-  [in-stream]
-  (let [rdr (BufferedReader. (InputStreamReader. in-stream))
-		sb (StringBuilder. )]
-	(loop [c (.read rdr)]
-	  (if (not= c -1)
-		(let []
-		  (.append sb (char c))
-		  (recur (.read rdr)))
-		(.toString sb)))))
 
 (def #^{:private true} p-info)
 (def #^{:private true} *p*)
@@ -41,7 +29,7 @@
 	 (binding [p-info {} *p* (.start pb)]
 	   (remember-pi :in-stream (.getInputStream *p*))
 	   (.waitFor *p*)
-	   (remember-pi :output (read-all (p-info :in-stream)))
+       (remember-pi :output (IOUtils/toString (p-info :in-stream)))
 	   (.destroy *p*)
 	   (if (not= 0 (.exitValue *p*))
 		 (let []
@@ -52,4 +40,3 @@
 		   (print (:output p-info))
 		   :ok)))
 	 (catch java.io.IOException ex :fail))))
-

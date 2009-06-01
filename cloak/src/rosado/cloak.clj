@@ -24,6 +24,7 @@
 (defn error [& args]
   (println (apply str " ERROR: " args)))
 
+; TODO: Move this to cloak.core
 (def +settings+
   (atom {:logger   {:error error, :notice notice}
          :file     ["cloakfile" "cloakfile.clj"]
@@ -106,7 +107,12 @@
       (map #(File. (File. cwd) %) file))))
 
 (defn run-program [{:keys [describe targets] :as settings}]
-  (load-tasks (.getAbsolutePath (find-cloakfile settings)))
+  (if-let [file (find-cloakfile settings)]
+    (load-tasks (.getAbsolutePath file))
+    (do
+      (println "Can't find Cloak file.")
+      (System/exit 1)))
+
   (try
     (init-tasks)
     (catch Exception e
