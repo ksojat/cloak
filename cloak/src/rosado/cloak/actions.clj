@@ -11,11 +11,39 @@
 
 
 (ns rosado.cloak.actions
-  (:use rosado.utils)
   (:import
     (clojure.lang RT)
+    (java.util Collections Arrays)
     (java.io File FileInputStream FileOutputStream)
     (org.apache.commons.io IOUtils FileUtils)))
+
+(def #^{:private true} p-info)
+(def #^{:private true} *p*)
+
+(defn- remember-pi
+  "Utility fn for mutating a var in run-process."
+  [kw val]
+  (set! p-info (assoc p-info kw val)))
+
+(defn run-command [#^String cmd-str]
+  (let [params (java.util.ArrayList.)
+		pb (ProcessBuilder. (Arrays/asList (.split cmd-str " ")))]
+	(.redirectErrorStream pb true)
+	(try
+	 (binding [p-info {} *p* (.start pb)]
+	   (remember-pi :in-stream (.getInputStream *p*))
+	   (.waitFor *p*)
+       (remember-pi :output (IOUtils/toString (p-info :in-stream)))
+	   (.destroy *p*)
+	   (if (not= 0 (.exitValue *p*))
+		 (let []
+		   (println "Error executing command: " cmd-str)
+		   (print (:output p-info))
+		   :fail)
+		 (let []
+		   (print (:output p-info))
+		   :ok)))
+	 (catch java.io.IOException ex :fail))))
 
 (defn sh
   "Performs a shell command."
