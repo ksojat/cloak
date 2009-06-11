@@ -11,6 +11,8 @@
   (:import (java.io File)
            (org.apache.tools.ant Project NoBannerLogger UnknownElement)))
 
+; TODO: Maybe add some kind of property convertor.
+
 (defn standard-logger []
   (doto (NoBannerLogger.)
     (.setMessageOutputLevel Project/MSG_INFO)
@@ -24,17 +26,25 @@
     (.addBuildListener (standard-logger))))
 
 ; TODO: Register this standard-project thing to +settings+
-(def +project+
-  (standard-project (File. (java.lang.System/getProperty "user.dir"))))
+;(def +project+
+;  (standard-project (File. (java.lang.System/getProperty "user.dir"))))
 
-(core/on :core/init
+; TODO: Copy all current properties if any.
+(core/on ::core/build-created
   (fn [build]
     (let [cwd (:cwd @build)]
       (swap! build assoc ::project (standard-project (File. cwd))))))
 
+; Mirror Cloak properties to Ant project.
+(core/on ::core/propery
+  (fn [build key value]
+    (when (and key value)
+      (.setProperty (::project @build) key value))))
+
 (defn unknown-element [el-name & specs]
   (let [ue (doto (UnknownElement. (name el-name))
-             (.setProject +project+))
+             ;(.setProject +project+))
+             (.setProject (::project @core/*build*)))
         w  (.getRuntimeConfigurableWrapper ue)
         [ps cs] (if (map? (first specs))
                   [(first specs) (next specs)] [nil specs])]

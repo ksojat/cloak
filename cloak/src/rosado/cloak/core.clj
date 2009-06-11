@@ -9,6 +9,25 @@
 (ns rosado.cloak.core
   (:use clojure.set))
 
+;;
+;; Utility functions
+;;
+
+(defn throwf [& args]
+  (throw (Exception. (apply format args))))
+
+; Holds current active build.
+(declare *build*)
+
+(def info
+  {:version "0.1a"
+   :authors [{:name "Roland Sadowski" :email "szabla gmail com"}
+             {:name "Krešimir Šojat"  :email "ksojat gmail com"}]})
+
+;;
+;; Event system.
+;;
+
 (def
   #^{:doc
       "Set of global event listeners. Every listener will be added to
@@ -25,34 +44,101 @@
   ([build event callback-fn]
     (swap! build update-in [:listeners event] #(conj (set %1) %2) callback-fn)))
 
-; Holds current active build.
-(declare *build*)
+(defn emmit [build event & args]
+  (doseq [f (mapcat event [(:listeners @build) global-listeners])]
+    (apply f build args)))
 
-(defn trigger [event & args]
-  (let [listeners (get-in @*build* [:listeners event])]
-    (doseq [l listeners]
-      (apply l *build* args))))
+;;
+;; Build related functions.
+;;
 
-(defn create-build [defaults]
-  (let [build (atom (merge defaults {:listeners @global-listeners}))]
+(defn add-property! [build key value]
+  (swap! build assoc-in [:properties key] value))
 
-    ; Update build specific listeners if global-listener changes.
-    (add-watch global-listeners (gensym "build__")
-      (fn [_ _ ov nv]
-        (let [ov      (merge ov (into {} (map (fn [x] [x #{}]) (keys nv))))
-              removed (merge-with difference ov nv)
-              added   (merge-with difference nv ov)
-              updater (comp #(merge-with difference % removed)
-                            #(merge-with union % added))]
-          (swap! build update-in [:listeners] updater))))
+(defn property
+  ([key value]
+    ;(swap! *build* assoc-in [:properties key] value)
+    (add-property! *build* key value)
+    (emmit *build* ::property key value))
 
+  ([key]
+    (get-in @*build* [:properties key])))
+
+(defn log [level & args]
+  (println (apply str " " (.toUpperCase (name level)) ": " args)))
+
+(defn build-settings []
+  {:logger    {:level :info
+               :fn log}
+   :file      ["cloakfile" "cloakfile.clj"]
+   :describe  false
+   :verbose   false
+   :targets   [:default]
+   :tasks     {}
+   :queue     []; TODO ???
+   :cwd       (System/getProperty "user.dir" "")
+   :bin       (System/getProperty "cloak.bin" "cloak")
+   :home      (System/getProperty "cloak.home" "")
+   :listeners @global-listeners})
+
+(defn create-build [settings]
+  (let [build (atom (merge (build-settings) settings))]
     ; Notify all listeners that build was initialized.
-    (binding [*build* build] (trigger ::init))
-
+    (emmit build ::build-created)
     build))
 
-(defn run-build [build]
-  (binding [*build* build]
-    (trigger ::started)
+;;
+;; Task dependency resolvers.
+;;
 
-    (println "Build is starting")))
+(defmulti resolver class)
+
+(defmethod
+  #^{:doc "Trie to resolve task's dependencies from set of exact task names."}
+  resolver clojure.lang.IPersistentSet [s]
+  (fn [ts]
+    (let [x (intersection s ts)]
+      (if (= s x)
+        x
+        (throwf "Could not find dependencies: %s" (difference s ts))))))
+
+(defmethod
+  #^{:doc "Dependencies are collected based on predicate used to
+           filter task names."}
+  resolver clojure.lang.Fn [pred]
+  (fn [ts]
+    (into #{} (filter pred ts))))
+
+(defmethod
+  #^{:doc "Dependencies are collected based on value of :type key in there
+           metadata."}
+  resolver clojure.lang.Keyword [k] (resolver #(= k (type %))))
+
+;;
+;; Tasks.
+;;
+
+(def *collector* identity)
+
+(defmulti create-task
+  (fn [type & _] type))
+
+; TODO: Fix fn-tail to remove first argument from bindings.
+; TODO: Why do i need to import create-task in target namespace??
+; TODO: Add with-meta to fn-tail output
+(defmacro deftask [type & fn-tail]
+  `(do
+      (derive ~type ::TaskBase)
+      (defmethod create-task ~type ~@fn-tail)))
+
+;; TODO: If :deps then don't do resolve, just strip it out
+(defn resolve-1 [task ts]
+  ((:resolve task) (filter #(= task %) ts)))
+
+;; TODO: Tag with ::TaskMap?
+(defn resolve-all [tasks]
+  (println "hi"))
+
+; TODO: Remove this
+(defmethod print-method ::TaskBase [t #^java.io.Writer w]
+  (.write w (str "Task: " (:name t))))

@@ -15,8 +15,14 @@
     (java.io File)
     (org.apache.commons.cli
       Option Options GnuParser HelpFormatter UnrecognizedOptionException))
+  (:require [rosado.cloak.core :as core])
   (:use rosado.cloak.main)
   (:gen-class))
+
+;; Load extensions so they can register there listeners.
+(require 'rosado.cloak.ant
+         'rosado.cloak.ivy
+         'rosado.cloak.stats)
 
 (defn notice [& args]
   (println (apply str " NOTICE: " args)))
@@ -24,29 +30,24 @@
 (defn error [& args]
   (println (apply str " ERROR: " args)))
 
-; TODO: Move this to cloak.core
-(def +settings+
-  (atom {:logger   {:error error, :notice notice}
-         :file     ["cloakfile" "cloakfile.clj"]
-         :describe false
-         :verbose  false
-         :targets  [:default]
-         :cwd      (System/getProperty "user.dir" "")
-         :bin      (System/getProperty "cloak.bin" "cloak")
-         :home     (System/getProperty "cloak.home" "")})); TODO: Default to ~/.cloak
-
 (def cli-options
   (doto (Options.)
     (.addOption "h" "help"     false "Print help")
+    (.addOption nil "version"  false "Show version information")
+    (.addOption nil "verbose"  false "Show verbose output")
     (.addOption (doto (Option. "q" "queue" true "Add task to execution queue")
                   (.setArgs Option/UNLIMITED_VALUES)))
     (.addOption "d" "describe" false "Describe tasks")
     (.addOption "f" "file"     true  "Use taskfile instead of CLOAK")
     (.addOption "t" "try"      false "Run Cloak but don't execute any actions (try)")
-    (.addOption "a" "ant"      true  "Generate Ant build facade")))
+    (.addOption (doto (Option. "D" nil true "Set build propery")
+                  (.setArgs 2)
+                  (.setArgName "<property>=<value>")
+                  (.setValueSeparator \=)))))
 
 (defn cli-help []
-  (.printHelp (HelpFormatter.) (:bin @+settings+) cli-options)
+  (.printHelp (HelpFormatter.)
+    (System/getProperty "cloak.bin" "cloak") cli-options)
   (System/exit 0))
 
 (defn cli-parse [command-line-arguments]
@@ -55,11 +56,16 @@
     (catch UnrecognizedOptionException e
       (cli-help))))
 
+(defn show-version []
+  (println (format "Cloak v%s" (:version core/info)))
+  (System/exit 0))
+
 (defn task-error
   "Error handler function used for task failures."
   [& args]
   (println (apply str " [" (name *current-task*) " ]" args)))
 
+; TODO: Ovdje rebindati *build*
 (defn- load-tasks
   "Loads tasks from input file and creates task-table for use by other fns"
   [file]
@@ -73,12 +79,27 @@
       (error (format "Loading cloak file \"%s\" failed." file))
       (throw e))))
 
+;(defn run-tasks
+;  "Run given tasks. Aborts on first failed task."
+;  [kwords]
+;  (println "Running tasks:" (apply str (interpose " "(map str kwords))))
+;  (doseq [kw kwords]
+;    (when-not (contains? @*tasks* kw)
+;      (error "No such task:" kw)
+;      (throw (Exception. "Specified task is not defined."))))
+;  (doseq [kw kwords]
+;    (try
+;     (binding [*error-handler* task-error]; TODO: Why i can't just send in project settings?
+;       (execute-task kw))
+;     (catch Exception e
+;       (error (.getMessage e))
+;       (throw e)))))
 (defn run-tasks
   "Run given tasks. Aborts on first failed task."
   [kwords]
   (println "Running tasks:" (apply str (interpose " "(map str kwords))))
   (doseq [kw kwords]
-    (when-not (contains? @*tasks* kw)
+    (when-not (contains? (:tasks @core/*build*) kw)
       (error "No such task:" kw)
       (throw (Exception. "Specified task is not defined."))))
   (doseq [kw kwords]
@@ -89,13 +110,24 @@
        (error (.getMessage e))
        (throw e)))))
 
+;(defn print-desc
+;  "Prints task descriptions."
+;  [taskmap]
+;  (newline)
+;  (do
+;    (doseq [t (for [key (keys taskmap)]
+;                (assoc (@*tasks* key) :name key))]
+;      (printf " %1$-16s" (if (keyword? (t :name)) (name (t :name)) (t :name)))
+;      (if (t :desc)
+;        (println (t :desc))
+;        (newline)))))
 (defn print-desc
   "Prints task descriptions."
   [taskmap]
   (newline)
   (do
     (doseq [t (for [key (keys taskmap)]
-                (assoc (@*tasks* key) :name key))]
+                (assoc ((:tasks @core/*build*) key) :name key))]
       (printf " %1$-16s" (if (keyword? (t :name)) (name (t :name)) (t :name)))
       (if (t :desc)
         (println (t :desc))
@@ -106,6 +138,41 @@
     (filter #(.exists %)
       (map #(File. (File. cwd) %) file))))
 
+;(defn run-program [{:keys [describe targets] :as settings}]
+;  (if-let [file (find-cloakfile settings)]
+;    (load-tasks (.getAbsolutePath file))
+;    (do
+;      (println "Can't find Cloak file.")
+;      (System/exit 1)))
+
+;  (try
+;    (init-tasks)
+;    (catch Exception e
+;      (error "Error initializing tasks")
+;      (error (.getMessage e))
+;      (throw e)))
+;  (try
+;    (if describe
+;      (print-desc @*tasks*)
+;      (run-tasks targets))))
+
+;(defn run-program [{:keys [describe targets] :as settings}]
+;  (if-let [file (find-cloakfile settings)]
+;    (load-tasks (.getAbsolutePath file))
+;    (do
+;      (println "Can't find Cloak file.")
+;      (System/exit 1)))
+
+;  (try
+;    (init-tasks)
+;    (catch Exception e
+;      (error "Error initializing tasks")
+;      (error (.getMessage e))
+;      (throw e)))
+;  (try
+;    (if describe
+;      (print-desc @*tasks*)
+;      (run-tasks targets))))
 (defn run-program [{:keys [describe targets] :as settings}]
   (if-let [file (find-cloakfile settings)]
     (load-tasks (.getAbsolutePath file))
@@ -121,41 +188,92 @@
       (throw e)))
   (try
     (if describe
-      (print-desc @*tasks*)
+      (print-desc (:tasks @core/*build*))
       (run-tasks targets))))
 
-(defn generate-ant-facade [file]
-  (println "This option will be implemented later."))
 
 (defn -main [& args]
-  (let [cmd (cli-parse (or args (list "")))
+  (let [cmd         (cli-parse (or args (list "")))
         has-option? #(.hasOption cmd %)
-        get-option  #(.getOptionValue cmd %)]
+        get-option  #(.getOptionValue cmd %)
+
+        settings (comp
+                   #(if (has-option? "describe")
+                      (assoc % :describe true)
+                      %)
+
+                   #(if (has-option? "file")
+                      (assoc % :file [(get-option "file")])
+                      %)
+
+                   #(if (has-option? "try")
+                      (assoc % :try true)
+                      %)
+
+                   #(if (has-option? "verbose")
+                      (assoc % :verbose true)
+                      %)
+
+                   #(if (has-option? "queue")
+                      (assoc % :targets
+                        (map keyword (seq (.getOptionValues cmd "queue"))))
+                      %))]
 
     (when (has-option? "help")
       (cli-help))
 
-    (when (has-option? "ant")
-      (generate-ant-facade (get-option "ant"))
-      (System/exit 0))
+    (when (has-option? "version")
+      (show-version))
 
-    (when (has-option? "describe")
-      (swap! +settings+ assoc :describe true))
+    (let [build (core/create-build (settings {}))]
+      ; Collect all properties
+      (binding [core/*build* build]
+        (doseq [[k v] (.getOptionProperties cmd "D")]
+          (core/property k v))
 
-    (when (has-option? "file")
-      (swap! +settings+ assoc :file [(get-option "file")]))
+          (core/emmit build ::core/build-started)
+          (Thread/sleep 1000)
+          (run-program build); TODO: Rename this to start-build
+          (core/emmit build ::core/build-finished))
 
-    (when (has-option? "try")
-      (swap! +settings+ assoc :try true))
+      ;(println "Build created")
+      (println @build))))
 
-    (when (has-option? "verbose")
-      (swap! +settings+ assoc :verbose true))
+;#_(defn -main [& args]
+;  (let [cmd (cli-parse (or args (list "")))
+;        has-option? #(.hasOption cmd %)
+;        get-option  #(.getOptionValue cmd %)]
 
-    (when (has-option? "queue")
-      (swap! +settings+ assoc :targets
-        (map keyword (seq (.getOptionValues cmd "queue")))))
+;    (when (has-option? "help")
+;      (cli-help))
 
-    (run-program @+settings+)))
+;    (when (has-option? "version")
+;      (show-version))
+
+;    (when (has-option? "ant")
+;      (generate-ant-facade (get-option "ant"))
+;      (System/exit 0))
+
+;    (when (has-option? "describe")
+;      (swap! +settings+ assoc :describe true))
+
+;    (when (has-option? "file")
+;      (swap! +settings+ assoc :file [(get-option "file")]))
+
+;    (when (has-option? "try")
+;      (swap! +settings+ assoc :try true))
+
+;    (when (has-option? "verbose")
+;      (swap! +settings+ assoc :verbose true))
+;
+;    (when (has-option? "queue")
+;      (swap! +settings+ assoc :targets
+;        (map keyword (seq (.getOptionValues cmd "queue")))))
+
+;    (let [build (create-build @+settings+)]
+;      )
+
+;    (run-program @+settings+)))
 
 ;; Standard run
 (when (and (not *compile-files*) (System/getProperty "cloak.runmain"))

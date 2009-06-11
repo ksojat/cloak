@@ -6,7 +6,7 @@
 ;; which can be found in the file CPL.TXT at the root of this
 ;; distribution.  By using this software in any fashion, you are
 ;; agreeing to be bound by the terms of this license.  You must not
-;; remove this notice, or any other, from this software. 
+;; remove this notice, or any other, from this software.
 
 (ns rosado.math.graph
   (:use clojure.set))
@@ -163,28 +163,6 @@
               false
               (recur (next verts)))
             true))))))
-
-;; (defn euler-path
-;;   "Finds Euler path in a graph. Assumes the path exists."
-;;   [g vi]
-;;   (let [epath (fn [gr v st]
-;;          (loop [stack st vert v graph gr]
-;;            (let [adj (adjacent-to graph vert) w (first adj)]
-;;            (if adj
-;;              (recur (cons w stack)
-;;                 w
-;;                 (-> graph
-;;                   (delete-edge [vert w])
-;;                   (delete-edge [w vert])))
-;;              [graph stack vert]))))]
-;;    (loop [pvert vi
-;;         [graph stack vert] (epath g vi '())
-;;         path []]
-;;      (cond (and (= pvert vert) (not (empty? stack)))
-;;          (recur (first stack)
-;;               (epath graph (first stack) (rest stack))
-;;               (conj path (first stack)))
-;;        :else path))))
 
 (defn discovered?
   ([g vi]
@@ -441,39 +419,3 @@
         *verts* (gensym "verts__")
         *dfs-internal* (gensym "dfs-internal__")]
     (make-dfs-main (make-dfs-internal)))))
-
-;; end custom dfs
-
-;; (defn acyclic?
-;;   [g]
-;;   false)
-
-;; utility functions
-
-(defn- adj-list-of->str
-  [vert]
-  (if-let [adj (adjacent-to vert)]
-    (map #(format "%2d" %) adj)))
-
-(defn print-graph
-  [gr]
-  (let []
-    (doseq [i (range 1 (count gr))]
-      (when (gr i)
-        (print (format "%3d: " i))
-        (doseq [adj (adj-list-of->str (gr i))]
-          (print adj))
-        (println)))))
-
-(defn to-mathematica-format [pairs]
-  (let [format-pair (fn [[x y]] (format "{%d, %d}" x y))
-        str-pairs (butlast (interleave (map format-pair pairs)
-                                       (repeat ", ")))
-        sb (StringBuilder.)]
-    (.append sb "{")
-    (doseq [s str-pairs] (.append sb s))
-    (.append sb "}")
-    (.toString sb)))
-
-;; TODO:
-;; transitive closure: matrix form, adj. list form
