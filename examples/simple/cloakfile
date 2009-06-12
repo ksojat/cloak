@@ -4,26 +4,39 @@
   (:use
     (rosado.cloak main actions)))
 
-(task :completitions
+(properties
+  base-dir (File. "."))
+
+(generated [base-dir]
+  (File. basedir "target"))
+
+(dependencies
+  {:org "org.clojure", :module "clojure", :rev "1.0.0"}
+  {:org "commons-cli", :module "commons-cli", :rev "1.2"})
+
+(task retrieve #{} [deps (fn [cs] (filter #(= :dependency (type %)) cs))]
+  (ivy/retrieve deps))
+
+(task completitions
   (println "Generate completitions for this project"))
 
-(task :repl [:completitions]
+(task repl #{'completitions}
   (println "Generating repl"))
 
-(task :apidoc
+(task apidoc
   (println "Generate api docs"))
 
-(task :aot
+(task aot
   (println "Generate classes"))
 
-(test :jar [:aot]
+(test jar #{'aot}
   (println "Generate jar file"))
 
-(task :dist [:apidoc :jar]
+(task dist #{'apidoc 'jar}
   (println "Generate final distribution"))
 
-(task :clean
+(task clean
   (println "Clean project"))
 
-(task :test [:jar]
+(task test #{'jar}
   (println "Run project tests"))

@@ -21,14 +21,14 @@
 
 (deftask ::Clean [filesets]
   (with-meta
-    {:name name, :resolve (resolve #{}), :f (fn [] (println "Clean"))}
+    {:name name, :deps #{}, :f (fn [] (println "Clean"))}
     {:type ::Clean}))
 
 ; TODO: Define clean macro
 
 (deftask ::Package [filesets]
   (with-meta
-    {:name name, :resolve (resolver #{}), :f (fn [] (println "Package"))}
+    {:name name, :deps #{}, :f (fn [] (println "Package"))}
     {:type ::Package}))
 
 ; TODO: Define package macro

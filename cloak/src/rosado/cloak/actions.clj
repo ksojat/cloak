@@ -17,6 +17,14 @@
     (java.io File FileInputStream FileOutputStream)
     (org.apache.commons.io IOUtils FileUtils)))
 
+;;
+;; Filesystem related actions.
+;;
+
+(alter-meta! *ns* assoc-in [:groups :filesystem]
+  {:name "Filesystem"
+   :desc "Manage files and directories on filesystem."})
+
 (def #^{:private true} p-info)
 (def #^{:private true} *p*)
 
@@ -45,8 +53,11 @@
 		   :ok)))
 	 (catch java.io.IOException ex :fail))))
 
-(defn sh
-  "Performs a shell command."
+(defn
+  #^{:doc    "Performs a shell command."
+     :action true
+     :group  :filesystem}
+  sh
   ([command]
      (run-command command))
   ([command flag]
@@ -55,36 +66,58 @@
                (throw (Exception. "shell command failed.")))
            :else (throw (IllegalArgumentException. (format "sh: unsupported flag %s" (str flag)))))))
 
-(defn copy
-  "Copies a file"
-  [src-file dest-file]
+(defn
+  #^{:doc    "Copies a file"
+     :action true
+     :group  :filesystem}
+  copy [src-file dest-file]
   (FileUtils/copyFile (File. src-file) (File. dest-file)))
 
-(defn copy-to
-  "Copies a file to destionation directory."
-  [src-file dest-dir]
+(defn
+  #^{:doc    "Copies a file to destionation directory."
+    :action true
+    :group  :filesystem}
+  copy-to [src-file dest-dir]
   (FileUtils/copyFileToDirectory (File. src-file) (File. dest-dir)))
 
-(defn move
-  "Moves a file"
-  [src target]
+(defn
+  #^{:doc    "Moves a file"
+    :action true
+    :group  :filesystem}
+  move [src target]
   (FileUtils/moveFile (File. src) (File. target)))
 
-(defn mkdir
-  "Creates directories, including necessary parent dirs."
-  [& dirs]
+(defn
+  #^{:doc    "Creates directories, including necessary parent dirs."
+     :action true
+     :group  :filesystem}
+  mkdir [& dirs]
   (doseq [dir dirs] (.mkdirs (File. dir))))
 
 ; TODO: Do i need this?
 (defn exists? [fname] (.exists (File. fname)))
 
-(defn rm [file]
-  "Remove file."
+(defn
+  #^{:doc    "Remove file."
+     :action true
+     :group  :filesystem}
+  rm [file]
   (.delete file))
 
-(defn rmdir [dir]
-  "Remove directory recursively (like 'rm -r dirname')."
+(defn
+  #^{:doc    "Remove directory recursively (like 'rm -r dirname')."
+    :action true
+    :group  :filesystem}
+  rmdir [dir]
   (FileUtils/deleteDirectory (File. dir)))
+
+;;
+;; Clojure related actions.
+;;
+
+(alter-meta! *ns* assoc-in [:groups :clojure]
+  {:name "Clojure"
+   :desc "Actions used to manipulate clojure files."})
 
 (defn ns-decl [file]
   (with-open [f (java.io.FileReader. file)
@@ -106,7 +139,12 @@
   (filter (complement nil?)
     (mapcat ns-decl (project-files src-dirs))))
 
-(defn clojurec [src-dirs dest-dir]
+(defn
+  #^{:doc "Compile all Clojure files from source directories to destionation
+          directory."
+    :action true
+    :group  :clojure}
+  clojurec [src-dirs dest-dir]
   ; Create destination directory.
   (.mkdirs dest-dir)
 

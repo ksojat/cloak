@@ -7,7 +7,7 @@
 ;; remove this notice, or any other, from this software.
 
 (ns rosado.cloak.core
-  (:use clojure.set))
+  (:use [clojure.set :exclude [project]]))
 
 ;;
 ;; Utility functions
@@ -131,14 +131,21 @@
       (derive ~type ::TaskBase)
       (defmethod create-task ~type ~@fn-tail)))
 
-;; TODO: If :deps then don't do resolve, just strip it out
-(defn resolve-1 [task ts]
-  ((:resolve task) (filter #(= task %) ts)))
+(defn resolve-1 [{d :deps, r :resolve :as task} ts]
+  (let [ts (into (empty ts) (filter #(not= (:name task) %) ts))
+        d (or d (when r (r ts)) #{})]
+    (-> task
+      (assoc :deps d) (dissoc :resolve))))
 
-;; TODO: Tag with ::TaskMap?
 (defn resolve-all [tasks]
-  (println "hi"))
+  (let [ts (set (map :name tasks))]
+    (map #(resolve-1 % ts) tasks)))
 
 ; TODO: Remove this
 (defmethod print-method ::TaskBase [t #^java.io.Writer w]
   (.write w (str "Task: " (:name t))))
+
+(defmacro project [name & specs])
+
+(defmacro module [name & body]
+  `(do ~@body))
