@@ -59,7 +59,7 @@
   (println (format "Cloak v%s" (:version core/info)))
   (System/exit 0))
 
-(defn task-error
+#_(defn task-error
   "Error handler function used for task failures."
   [& args]
   (println (apply str " [" (name *current-task*) " ]" args)))
@@ -77,6 +77,12 @@
       (error (format "Loading cloak file \"%s\" failed." file))
       (throw e))))
 
+(defn execute-task [& _]
+  (println "Placeholder, remove later"))
+
+(defn init-tasks [& _]
+  (println "Placeholder, remove later"))
+
 (defn run-tasks
   "Run given tasks. Aborts on first failed task."
   [kwords]
@@ -87,8 +93,7 @@
       (throw (Exception. "Specified task is not defined."))))
   (doseq [kw kwords]
     (try
-     (binding [*error-handler* task-error]; TODO: Why i can't just send in project settings?
-       (execute-task kw))
+     (execute-task kw)
      (catch Exception e
        (error (.getMessage e))
        (throw e)))))
