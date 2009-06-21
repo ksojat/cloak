@@ -19,8 +19,7 @@
   (:import
     (java.io File)
     (org.apache.commons.io FileUtils))
-  (:require [rosado.cloak.core :as core])
-  #_(:use rosado.math.graph))
+  (:require [rosado.cloak.core :as core]))
 
 (defstruct task-struct :actions :deps :desc)
 
@@ -149,49 +148,11 @@
 (defn init-tasks []
   (dosync (ref-set task-table (make-table (:tasks @core/*build*)))))
 
-;; function used for resolving dependencies
-;;
-#_(def
- #^{:private true}
- sort-tasks (make-dfs
-             (:tree-edge? (fn [g a b]
-                            (not (discovered? g b))))
-             (:back-edge? (fn [g a b]
-                            (not (tag? g b :post))))
-             (:back-edge-hook (fn [arg-m [a b]]
-                                (*error-handler* (format "Circular dependency: %s <=> %s."
-                                                         (to-task a)
-                                                         (to-task b)))
-                                (throw (Exception. "Dependency graph not is not a DAG"))))
-             (:increment-pre #(inc %1))
-             (:increment-post #(inc %1))
-             (:mark-pre-visited #(tag-vertex %1 %2 :pre %3))
-             (:mark-post-visited (fn [g vi cnt]
-                                   (when (= (tag? g vi :compo) 1)
-                                     (set! *queue* (conj *queue* vi)))
-                                   (tag-vertex g vi :post cnt)))
-             (:increment-component (fn [cnt]
-                                     (inc cnt)))
-             (:mark-component (fn [g v cn]
-                                (tag-vertex g v :compo cn)))))
-
 (defn sort-tasks [& _]
   (println "Placeholder, remove later"))
 
-#_(defn- add-task-vertex [g index]
-  (add-vertex g
-              index
-              (make-vertex {}
-                           (map #(to-task %1)
-                                (:deps ((:tasks @core/*build*) (to-task index)))))))
-
 (defn add-task-vertex [g index]
   (println "Placeholder, remove later"))
-
-#_(defn make-task-graph [tasks]
-  (init-tasks)
-  (let [g (make-graph (count tasks))]
-    (reduce add-task-vertex g (task-indices))))
 
 (defn make-task-graph [tasks]
   (println "Placeholder, remove later"))
