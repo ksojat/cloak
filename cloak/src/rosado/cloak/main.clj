@@ -20,11 +20,10 @@
     (java.io File)
     (org.apache.commons.io FileUtils))
   (:require [rosado.cloak.core :as core])
-  (:use rosado.math.graph))
+  #_(:use rosado.math.graph))
 
 (defstruct task-struct :actions :deps :desc)
 
-;(def *tasks* (ref {}))					;holds tasks and actions
 (def *queue*)							;holds sorted tasks
 (def #^{:private true}
      task-table (ref {:to-int {} :to-task {}}))
@@ -152,13 +151,12 @@
 
 ;; function used for resolving dependencies
 ;;
-(def
+#_(def
  #^{:private true}
  sort-tasks (make-dfs
              (:tree-edge? (fn [g a b]
                             (not (discovered? g b))))
              (:back-edge? (fn [g a b]
-                                        ;(println "BACK-EDGE?")
                             (not (tag? g b :post))))
              (:back-edge-hook (fn [arg-m [a b]]
                                 (*error-handler* (format "Circular dependency: %s <=> %s."
@@ -175,20 +173,28 @@
              (:increment-component (fn [cnt]
                                      (inc cnt)))
              (:mark-component (fn [g v cn]
-                                        ;(println "mark-component: " [g v cn])
                                 (tag-vertex g v :compo cn)))))
 
-(defn- add-task-vertex [g index]
+(defn sort-tasks [& _]
+  (println "Placeholder, remove later"))
+
+#_(defn- add-task-vertex [g index]
   (add-vertex g
               index
               (make-vertex {}
                            (map #(to-task %1)
                                 (:deps ((:tasks @core/*build*) (to-task index)))))))
 
-(defn make-task-graph [tasks]
+(defn add-task-vertex [g index]
+  (println "Placeholder, remove later"))
+
+#_(defn make-task-graph [tasks]
   (init-tasks)
   (let [g (make-graph (count tasks))]
     (reduce add-task-vertex g (task-indices))))
+
+(defn make-task-graph [tasks]
+  (println "Placeholder, remove later"))
 
 (defn execute-task [task-kw]
   (binding [*queue* [] *current-task* task-kw]

@@ -125,7 +125,7 @@
             <arg value='rosado.cloak.ant'/>
             <arg value='rosado.cloak.ivy'/>
             <arg value='rosado.cloak.core'/>
-            <arv value='rosado.cloak.tasks'/>
+            <arg value='rosado.cloak.tasks'/>
             <arg value='rosado.cloak.stats'/>
 		</java>
 	</target>
