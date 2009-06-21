@@ -117,13 +117,13 @@
           classpath="${cloak.classes.dir}">
 			<sysproperty key="clojure.compile.path" value="${cloak.classes.dir}" />
 			<classpath refid="cloak.compile.classpath" />
-            <arg value="rosado.cloak.actions"/>
-            <arg value="rosado.cloak.main" />
-            <arg value='rosado.cloak.ant'/>
-            <arg value='rosado.cloak.ivy'/>
-            <arg value='rosado.cloak.core'/>
-            <arg value='rosado.cloak.tasks'/>
-            <arg value='rosado.cloak.stats'/>
+            <arg value="cloak.actions"/>
+            <arg value="cloak.main" />
+            <arg value='cloak.ant'/>
+            <arg value='cloak.ivy'/>
+            <arg value='cloak.core'/>
+            <arg value='cloak.tasks'/>
+            <arg value='cloak.stats'/>
 		</java>
 	</target>
 
