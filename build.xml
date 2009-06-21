@@ -118,7 +118,6 @@
           classpath="${cloak.classes.dir}">
 			<sysproperty key="clojure.compile.path" value="${cloak.classes.dir}" />
 			<classpath refid="cloak.compile.classpath" />
-            <arg value="rosado.cloak"/>
             <arg value="rosado.cloak.actions"/>
             <arg value="rosado.cloak.main" />
             <arg value='rosado.cloak.ant'/>

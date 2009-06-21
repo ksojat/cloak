@@ -9,14 +9,13 @@
 ;; agreeing to be bound by the terms of this license.  You must not
 ;; remove this notice, or any other, from this software.
 
-(ns rosado.cloak
+(ns rosado.cloak.main
   (:import
     (java.lang System)
     (java.io File)
     (org.apache.commons.cli
       Option Options GnuParser HelpFormatter UnrecognizedOptionException))
   (:require [rosado.cloak.core :as core])
-  (:use rosado.cloak.main)
   (:gen-class))
 
 ;; Load extensions so they can register there listeners.
