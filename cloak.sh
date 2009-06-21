@@ -1,7 +1,7 @@
 #! /bin/sh
 
 CLOAK_BIN=$0
-CLOAK_MAIN=rosado.cloak
+CLOAK_MAIN=rosado.cloak.main
 
 # Find Cloak
 if [ -z "$CLOAK_HOME" ]; then

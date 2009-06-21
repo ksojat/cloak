@@ -6,9 +6,9 @@
 ;; agreeing to be bound by the terms of this license.  You must not
 ;; remove this notice, or any other, from this software.
 
-(ns rosado.cloak.stats
+(ns cloak.stats
   (:import (java.lang System))
-  (:require [rosado.cloak.core :as core]))
+  (:require [cloak.core :as core]))
 
 (defn now []
   (System/currentTimeMillis))

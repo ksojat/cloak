@@ -10,7 +10,7 @@
 ;; remove this notice, or any other, from this software.
 
 
-(ns rosado.cloak.actions
+(ns cloak.actions
   (:import
     (clojure.lang RT)
     (java.util Collections Arrays)
@@ -105,7 +105,7 @@
   (.delete file))
 
 (defn
-  #^{:doc    "Remove directory recursively (like 'rm -r dirname')."
+  #^{:doc   "Remove directory recursively (like 'rm -r dirname')."
     :action true
     :group  :filesystem}
   rmdir [dir]
@@ -169,7 +169,7 @@
   (when-let [res (resource-url res)] (.getFile res)))
 
 (defn repl-as-string [type]
-  (resource-as-string (format "rosado/cloak/repl.%s" type)))
+  (resource-as-string (format "cloak/repl.%s" type)))
 
 (defn replace-tokens [s tokens-map]
   (reduce

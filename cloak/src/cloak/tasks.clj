@@ -6,9 +6,9 @@
 ;; agreeing to be bound by the terms of this license.  You must not
 ;; remove this notice, or any other, from this software.
 
-(ns rosado.cloak.tasks
+(ns cloak.tasks
   (:use
-    [rosado.cloak.core :only [*collector* resolver deftask create-task]]))
+    [cloak.core :only [*collector* resolver deftask create-task]]))
 
 (deftask ::Task [_ name deps f]
   (with-meta

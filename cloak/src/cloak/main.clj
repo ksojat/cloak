@@ -9,19 +9,19 @@
 ;; agreeing to be bound by the terms of this license.  You must not
 ;; remove this notice, or any other, from this software.
 
-(ns rosado.cloak.main
+(ns cloak.main
   (:import
     (java.lang System)
     (java.io File)
     (org.apache.commons.cli
       Option Options GnuParser HelpFormatter UnrecognizedOptionException))
-  (:require [rosado.cloak.core :as core])
+  (:require [cloak.core :as core])
   (:gen-class))
 
 ;; Load extensions so they can register there listeners.
-(require 'rosado.cloak.ant
-         'rosado.cloak.ivy
-         'rosado.cloak.stats)
+(require 'cloak.ant
+         'cloak.ivy
+         'cloak.stats)
 
 (defn notice [& args]
   (println (apply str " NOTICE: " args)))
@@ -166,6 +166,10 @@
 
     (when (has-option? "version")
       (show-version))
+
+    ; Collect all properties.
+    (System/setProperties
+      (.putAll (System/getProperties) (.getOptionProperties cmd "D")))
 
     (let [build (core/create-build (settings {}))]
       ; Collect all properties

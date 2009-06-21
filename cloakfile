@@ -1,6 +1,5 @@
 (ns rosado.cloak-build
   (:import (java.io File))
-  (:require [rosado.cloak :as cloak])
   (:use [rosado.cloak.ant :only [ant]])
   (:use rosado.cloak.main)
   (:use rosado.cloak.actions))
