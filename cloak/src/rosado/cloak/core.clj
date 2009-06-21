@@ -9,6 +9,9 @@
 (ns rosado.cloak.core
   (:use [clojure.set :exclude [project]]))
 
+(import '(org.apache.oro.text GlobCompiler)
+        '(org.apache.oro.text.regex Perl5Matcher))
+
 ;;
 ;; Utility functions
 ;;
@@ -57,7 +60,6 @@
 
 (defn property
   ([key value]
-    ;(swap! *build* assoc-in [:properties key] value)
     (add-property! *build* key value)
     (emmit *build* ::property key value))
 
@@ -88,6 +90,33 @@
     build))
 
 ;;
+;; Task ids
+;;
+
+(defn id->string
+  "Convert task id to string."
+  [{p :prefix n :name}]
+  (str (apply str (interpose ":" p)) ":" n))
+
+(defn string->id
+  "Convert string to task id."
+  [s]
+  (let [s (map symbol (seq (.split s ":")))]
+    {:prefix (drop-last s) :name (last s)}))
+
+(defn glob->pattern [g]
+  (.compile (GlobCompiler.) g GlobCompiler/STAR_CANNOT_MATCH_NULL_MASK))
+
+(defn glob-matcher [g]
+  (let [p (glob->pattern g), m (Perl5Matcher.)]
+    #(.contains m % p)))
+
+(defn filter-ids
+  "Filter seqence of task ids by given glob pattern."
+  [glob ids]
+  (let [m (glob-matcher glob)] (filter #(m (id->string %)) ids)))
+
+;;
 ;; Task dependency resolvers.
 ;;
 
@@ -96,11 +125,12 @@
 (defmethod
   #^{:doc "Trie to resolve task's dependencies from set of exact task names."}
   resolver clojure.lang.IPersistentSet [s]
-  (fn [ts]
-    (let [x (intersection s ts)]
-      (if (= s x)
-        x
-        (throwf "Could not find dependencies: %s" (difference s ts))))))
+  (let [s (into (empty s) (map (fn [x] (if (list? x) x (list x))) s))]
+    (fn [ts]
+      (let [x (intersection s ts)]
+        (if (= s x)
+          x
+          (throwf "Could not find dependencies: %s" (difference s ts)))))))
 
 (defmethod
   #^{:doc "Dependencies are collected based on predicate used to
@@ -126,19 +156,25 @@
 ; TODO: Fix fn-tail to remove first argument from bindings.
 ; TODO: Why do i need to import create-task in target namespace??
 ; TODO: Add with-meta to fn-tail output
+; TODO: Add type as vector [type base] so TaskBase dosn't need to be
+;       the only taks base.
 (defmacro deftask [type & fn-tail]
   `(do
       (derive ~type ::TaskBase)
       (defmethod create-task ~type ~@fn-tail)))
 
 (defn resolve-1 [{d :deps, r :resolve :as task} ts]
-  (let [ts (into (empty ts) (filter #(not= (:name task) %) ts))
-        d (or d (when r (r ts)) #{})]
-    (-> task
-      (assoc :deps d) (dissoc :resolve))))
+  (let [ts (into (empty ts) (filter #(not= (:name task) %) ts))]
+    ; TODO: Catch exceptions, report with full taks name
+    (try
+      (-> task
+        (assoc :deps (r ts)) (dissoc :resolve))
+      (catch Exception e
+        (throw (Exception. (str "Task " (:name task) ": " (.getMessage e))))))))
 
 (defn resolve-all [tasks]
   (let [ts (set (map :name tasks))]
+    (println ts)
     (map #(resolve-1 % ts) tasks)))
 
 ; TODO: Remove this
@@ -147,5 +183,45 @@
 
 (defmacro project [name & specs])
 
+(defn pop-module-prefix [prefix tasks]
+  (into (empty tasks)
+    (map
+      (fn [t]
+        (if (and (= (first t) prefix) (next t))
+          (pop t)
+          t))
+      tasks)))
+
+(defn module-collector [name body-fn]
+  (let [tasks (atom [])]
+    (binding [*collector* #(swap! tasks conj %)]
+      (body-fn))
+    (doseq [{n :name, r :resolve :as t} @tasks]
+      (let [n (conj n name)
+            r (fn [ts]
+                (let [ts (filter seq? ts)]
+                  (r ts)))]
+        (*collector* (assoc t :name n :resolve r))))))
+
 (defmacro module [name & body]
-  `(do ~@body))
+  `(module-collector '~name (fn [] ~@body)))
+
+(defmacro configuration [& body])
+
+;;
+;; Groups and fragments.
+;;
+
+(defn load-fragment [& names]
+  (println "Not implemented for now"))
+
+(defmacro fragment [name & body]
+  `(println "Fragments are not implemented for now"))
+
+(defn create-group [name fragments]
+  (with-meta
+    {:name name :fragments fragments}
+    {:type ::Group}))
+
+(defmacro group [name & body]
+  `(println "Groups are not implemented for now"))

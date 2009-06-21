@@ -12,23 +12,29 @@
 
 (deftask ::Task [_ name deps f]
   (with-meta
-    {:name name, :resolve (resolver deps), :f f}
+    {:name (if (list? name) name (list name)), :resolve (resolver deps), :f f}
     {:type ::Task}))
 
-(defmacro task [name deps & body]
+;(defmacro task [name deps & body]
+;  `(*collector*
+;     (create-task ::Task '~name ~deps (fn [] ~@body))))
+
+(defmacro task [name deps props & body]
   `(*collector*
      (create-task ::Task '~name ~deps (fn [] ~@body))))
 
+;; TODO: Error, no name
 (deftask ::Clean [filesets]
   (with-meta
-    {:name name, :deps #{}, :f (fn [] (println "Clean"))}
+    {:name name, :resolve (resolver #{}), :f (fn [] (println "Clean"))}
     {:type ::Clean}))
 
 ; TODO: Define clean macro
 
+;; TODO: Error, no name
 (deftask ::Package [filesets]
   (with-meta
-    {:name name, :deps #{}, :f (fn [] (println "Package"))}
+    {:name name, :resolve (resolver #{}), :f (fn [] (println "Package"))}
     {:type ::Package}))
 
 ; TODO: Define package macro
