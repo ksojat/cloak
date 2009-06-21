@@ -121,7 +121,6 @@
             <arg value="rosado.cloak"/>
             <arg value="rosado.cloak.actions"/>
             <arg value="rosado.cloak.main" />
-            <arg value='rosado.math.graph'/>
             <arg value='rosado.cloak.ant'/>
             <arg value='rosado.cloak.ivy'/>
             <arg value='rosado.cloak.core'/>
