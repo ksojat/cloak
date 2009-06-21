@@ -69,7 +69,6 @@
 (defn- load-tasks
   "Loads tasks from input file and creates task-table for use by other fns"
   [file]
-  (clear-tasks!)
   (try
     (load-file file)
     (catch java.io.FileNotFoundException e
@@ -79,21 +78,6 @@
       (error (format "Loading cloak file \"%s\" failed." file))
       (throw e))))
 
-;(defn run-tasks
-;  "Run given tasks. Aborts on first failed task."
-;  [kwords]
-;  (println "Running tasks:" (apply str (interpose " "(map str kwords))))
-;  (doseq [kw kwords]
-;    (when-not (contains? @*tasks* kw)
-;      (error "No such task:" kw)
-;      (throw (Exception. "Specified task is not defined."))))
-;  (doseq [kw kwords]
-;    (try
-;     (binding [*error-handler* task-error]; TODO: Why i can't just send in project settings?
-;       (execute-task kw))
-;     (catch Exception e
-;       (error (.getMessage e))
-;       (throw e)))))
 (defn run-tasks
   "Run given tasks. Aborts on first failed task."
   [kwords]
@@ -110,17 +94,6 @@
        (error (.getMessage e))
        (throw e)))))
 
-;(defn print-desc
-;  "Prints task descriptions."
-;  [taskmap]
-;  (newline)
-;  (do
-;    (doseq [t (for [key (keys taskmap)]
-;                (assoc (@*tasks* key) :name key))]
-;      (printf " %1$-16s" (if (keyword? (t :name)) (name (t :name)) (t :name)))
-;      (if (t :desc)
-;        (println (t :desc))
-;        (newline)))))
 (defn print-desc
   "Prints task descriptions."
   [taskmap]
@@ -138,41 +111,6 @@
     (filter #(.exists %)
       (map #(File. (File. cwd) %) file))))
 
-;(defn run-program [{:keys [describe targets] :as settings}]
-;  (if-let [file (find-cloakfile settings)]
-;    (load-tasks (.getAbsolutePath file))
-;    (do
-;      (println "Can't find Cloak file.")
-;      (System/exit 1)))
-
-;  (try
-;    (init-tasks)
-;    (catch Exception e
-;      (error "Error initializing tasks")
-;      (error (.getMessage e))
-;      (throw e)))
-;  (try
-;    (if describe
-;      (print-desc @*tasks*)
-;      (run-tasks targets))))
-
-;(defn run-program [{:keys [describe targets] :as settings}]
-;  (if-let [file (find-cloakfile settings)]
-;    (load-tasks (.getAbsolutePath file))
-;    (do
-;      (println "Can't find Cloak file.")
-;      (System/exit 1)))
-
-;  (try
-;    (init-tasks)
-;    (catch Exception e
-;      (error "Error initializing tasks")
-;      (error (.getMessage e))
-;      (throw e)))
-;  (try
-;    (if describe
-;      (print-desc @*tasks*)
-;      (run-tasks targets))))
 (defn run-program [{:keys [describe targets] :as settings}]
   (if-let [file (find-cloakfile settings)]
     (load-tasks (.getAbsolutePath file))

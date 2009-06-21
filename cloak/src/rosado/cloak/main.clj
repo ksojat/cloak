@@ -37,31 +37,14 @@
 (def *notify-handler* println); TODO: Can i merge this with error-handler in some concept of logger
 (def *error-handler* println); TODO: Why default can't be task-error from rosado.cloak?
 
-(defmulti to-task class)
-
-(defmethod to-task java.lang.Integer [index]
-  ((@task-table :to-task) index))
-
-(defmethod to-task clojure.lang.Keyword [kw]
-  ((@task-table :to-int) kw))
-
-(defmethod to-task java.lang.String [fname]
-  ((@task-table :to-int) fname))
+(defn to-task [& _]
+  (println "Placeholder, remove later"))
 
 (defn save-task [task-name task-info]
   (swap! core/*build* assoc-in [:tasks task-name] task-info))
 
-(defn- annotate-task
-  "Adds metadata to task. Does not save it in *tasks*."
-  [task-name kw val]
-  (assert (not= nil task-name))
-  (let [t (get-in @core/*build* [:tasks task-name])]
-    (save-task task-name (with-meta t (merge {} (meta t) {kw val})))))
-
-(defn- task-annotations
-  "Returns annotations (meta-data) of a task."
-  [task-name]
-  (meta (get-in @core/*build* [:tasks task-name])))
+(defn task-annotations [task-name]
+  (println "Placeholder, remove later."))
 
 (defn do-task [task-name]
   (assert (not= nil task-name))
@@ -74,31 +57,7 @@
       (when-let [actions (tsk :actions)]
         (actions)))))
 
-(defn clear-tasks!
-  "Clears task table and *tasks* map (which holds defined tasks)"
-  []
-  (swap! core/*build* assoc :tasks {})
-  (dosync
-   (ref-set task-table {})))
-
-(derive clojure.lang.LazilyPersistentVector ::Dependencies)
-(derive clojure.lang.PersistentVector ::Dependencies)
-(derive clojure.lang.IPersistentList ::Actions)
-
 (defmulti parse-task (fn [mp elems] (class (first elems))))
-
-(defmethod parse-task ::Dependencies [mp elems]
-  (assoc mp :deps (first elems)))
-
-(defmethod parse-task java.lang.String [mp elems]
-  (assoc mp :desc (first elems)))
-
-(defmethod parse-task ::Actions [mp elems]
-  (assoc mp :actions `(fn [] (do ~@elems))))
-
-; TODO: Do i need this?
-(defmethod parse-task nil [mp elems]    ;dummy task, no actions
-  (assoc mp :actions `(fn[] nil)))
 
 (defn- to-task-struct [sequ]
   (loop [r sequ tsk (struct task-struct nil nil nil)]
@@ -169,7 +128,7 @@
          (binding [*current-task* (to-task q)]
            (when-not *try-only*
              (do-task (to-task q))))
-         (annotate-task (to-task q) :done true)
+         ;(annotate-task (to-task q) :done true)
          (*notify-handler* "Done."))
        (catch Exception e
          (*error-handler* "Error executing task")
