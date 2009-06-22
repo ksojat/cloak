@@ -1,0 +1,105 @@
+<html>
+<head>
+    <title>Cloak Manual</title>
+    <link type='text/css' rel='stylesheet' href='manual.css'/>
+</head>
+<body>
+
+<!-- Header -->
+<div id='header'>
+    Cloak <span>Clojure powered build system</span>
+</div>
+
+<!-- Document body -->
+<div id='main'>
+
+<h1 class='toc'>Table of Content</h1>
+<ol class='toc'>
+    <li><a href='#ch0'>Introduction</a></li>
+    <li><a href='#ch1'>Installation</a></li>
+    <li><a href='#ch2'>Running Cloak</a></li>
+</ol>
+</p>
+
+<!--
+1. Chapter
+-->
+<div href='ch1'>
+<h1>1. Introduction</h1>
+
+<p>
+Cloak is a automation tool created to be used by projects written in
+<a href='http:/clojure.org'>Clojure</a>.
+
+Cloak can be used to build, package and distribute projects in a way that
+is simple for both project developers and users.
+</p>
+
+<p>
+In it's core, Cloak is similar to projects like Apache Ant or Ruby Rake. You create
+set of tasks and declare dependencies among them and actions they sould perform
+when called. When used this way Cloak can easily replace Ant (there is a Ant
+wrapper so all Ant tasks are accessible to you when using Cloak).
+</p>
+
+<p>
+<strong>TODO:</strong> Explain how it can be used more like Maven, Ruby Gems and
+Python Distutils.
+</p>
+
+<pre>
+(project helloworld
+
+  (description
+    :name "Hello World"
+    :author "Clojurian"
+    :license {:name "Eclipse Public License"
+              :url  "http://www.eclipse.org/legal/epl-v10.html"})
+
+  (dependencies
+    "org.clojure:clojure:1.0.0"))
+</pre>
+
+<a class='top' href='#top'><span>Top</span></a>
+</div>
+
+<!--
+2. Chapter
+-->
+<div href='ch2'>
+<h1>2. Installation</h1>
+
+<p>
+<strong>TODO:</strong> Write this chapter.
+</p>
+
+<a class='top' href='#top'><span>Top</span></a>
+</div>
+
+<!--
+3. Chapter
+-->
+<div href='ch3'>
+<h1>3. Running Cloak</h1>
+
+<p>
+By default Cloak looks for files <code>cloakfile</code> and <code>cloakfile.clj</code>
+in the current working directory, you can specify alternative file using the
+<code>-f</code> option on command line.
+</p>
+
+<p>
+<strong>TODO:</strong> Explain other command line options.
+</p>
+
+<a class='top' href='#top'><span>Top</span></a>
+</div>
+
+</div>
+
+<!-- Footer -->
+<div id='footer'>
+</div>
+
+</body>
+</html>

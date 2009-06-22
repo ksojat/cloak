@@ -37,22 +37,14 @@ Syntax
 
 Tasks:
 
-		(task :task-name [:task :other-task]
+		(task task-name #{'task 'other-task}
 			  "Task description"
 			  (action1 arg)
 			  (action args))
 
-Where task's name should be a keyword, task's dependencies should be a
-vector of task names or file task names (optional), description should
-be a string (optional).
-
-File tasks:
-
-	 (file "file_name" ["other.xml" :some-task]
-	 	   "Description"
-	 	   (action-to-generate-file "file_name"))
-
-File tasks can't be specified as targets on the command line.
+Where task's name should be a symbol, task's dependencies should be a
+set of task names, description should go in :doc metadata associated with
+task name.
 
 Compiling Cloak
 ---------------

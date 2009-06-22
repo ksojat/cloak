@@ -36,6 +36,8 @@
     (.addOption nil "verbose"  false "Show verbose output")
     (.addOption (doto (Option. "q" "queue" true "Add task to execution queue")
                   (.setArgs Option/UNLIMITED_VALUES)))
+    (.addOption (doto (Option. "s" "skip" true "Skip tasks")
+                  (.setArgs Option/UNLIMITED_VALUES)))
     (.addOption "d" "describe" false "Describe tasks")
     (.addOption "f" "file"     true  "Use taskfile instead of CLOAK")
     (.addOption "t" "try"      false "Run Cloak but don't execute any actions (try)")
@@ -115,8 +117,9 @@
     (filter #(.exists %)
       (map #(File. (File. cwd) %) file))))
 
-(defn run-program [{:keys [describe targets] :as settings}]
-  (if-let [file (find-cloakfile settings)]
+(defn run-program [{:keys [describe targets] :as build}]
+  (println build)
+  (if-let [file (find-cloakfile build)]
     (load-tasks (.getAbsolutePath file))
     (do
       (println "Can't find Cloak file.")
@@ -139,27 +142,28 @@
         has-option? #(.hasOption cmd %)
         get-option  #(.getOptionValue cmd %)
 
-        settings (comp
-                   #(if (has-option? "describe")
-                      (assoc % :describe true)
-                      %)
+        settings  ((comp
+                     #(if (has-option? "describe")
+                       (assoc % :describe true)
+                       %)
 
-                   #(if (has-option? "file")
-                      (assoc % :file [(get-option "file")])
-                      %)
+                     #(if (has-option? "file")
+                       (assoc % :file [(get-option "file")])
+                       %)
 
-                   #(if (has-option? "try")
-                      (assoc % :try true)
-                      %)
+                     #(if (has-option? "try")
+                       (assoc % :try true)
+                       %)
 
-                   #(if (has-option? "verbose")
-                      (assoc % :verbose true)
-                      %)
+                     #(if (has-option? "verbose")
+                       (assoc % :verbose true)
+                       %)
 
-                   #(if (has-option? "queue")
-                      (assoc % :targets
-                        (map keyword (seq (.getOptionValues cmd "queue"))))
-                      %))]
+                     #(if (has-option? "queue")
+                       (assoc % :targets
+                         (map keyword (seq (.getOptionValues cmd "queue"))))
+                       %))
+                   {})]
 
     (when (has-option? "help")
       (cli-help))
@@ -171,7 +175,7 @@
     (System/setProperties
       (.putAll (System/getProperties) (.getOptionProperties cmd "D")))
 
-    (let [build (core/create-build (settings {}))]
+    (let [build (core/create-build settings)]
       ; Collect all properties
       (binding [core/*build* build]
         (doseq [[k v] (.getOptionProperties cmd "D")]
@@ -179,47 +183,11 @@
 
           (core/emmit build ::core/build-started)
           (Thread/sleep 1000)
-          (run-program build); TODO: Rename this to start-build
+          (run-program @build); TODO: Rename this to start-build
           (core/emmit build ::core/build-finished))
 
       ;(println "Build created")
       (println @build))))
-
-;#_(defn -main [& args]
-;  (let [cmd (cli-parse (or args (list "")))
-;        has-option? #(.hasOption cmd %)
-;        get-option  #(.getOptionValue cmd %)]
-
-;    (when (has-option? "help")
-;      (cli-help))
-
-;    (when (has-option? "version")
-;      (show-version))
-
-;    (when (has-option? "ant")
-;      (generate-ant-facade (get-option "ant"))
-;      (System/exit 0))
-
-;    (when (has-option? "describe")
-;      (swap! +settings+ assoc :describe true))
-
-;    (when (has-option? "file")
-;      (swap! +settings+ assoc :file [(get-option "file")]))
-
-;    (when (has-option? "try")
-;      (swap! +settings+ assoc :try true))
-
-;    (when (has-option? "verbose")
-;      (swap! +settings+ assoc :verbose true))
-;
-;    (when (has-option? "queue")
-;      (swap! +settings+ assoc :targets
-;        (map keyword (seq (.getOptionValues cmd "queue")))))
-
-;    (let [build (create-build @+settings+)]
-;      )
-
-;    (run-program @+settings+)))
 
 ;; Standard run
 (when (and (not *compile-files*) (System/getProperty "cloak.runmain"))

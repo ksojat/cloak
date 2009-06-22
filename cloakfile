@@ -1,11 +1,30 @@
 (ns rosado.cloak-build
   (:import (java.io File))
-  (:use [rosado.cloak.ant :only [ant]])
-  (:use rosado.cloak.main)
-  (:use rosado.cloak.actions))
+  (:use [cloak.ant :only [ant]])
+  (:use cloak.main)
+  (:use cloak.actions)
+  (:use cloak.tasks))
+
+(import '(java.io File))
+
+(use
+  ['cloak.ant :only ['ant]]
+  'cloak.main
+  'cloak.project
+  'cloak.actions
+  'cloak.tasks)
 
 (defn path [& segments]
   (reduce (fn [base seg] (if base (File. base seg) (File. seg))) segments))
+
+(project cloak
+  (property cp "lib/*:cloak/src:cloak/resources")
+  (property completitions ".completitions")
+  (property dest (path "build" "cloak"))
+  (property src (path "cloak" "src"))
+
+  (task completitions #{} [completitions]
+    (clojure-completitions 
 
 (def props
   {:cp    "lib/*:cloak/src:cloak/resources"
