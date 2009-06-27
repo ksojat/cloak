@@ -26,7 +26,6 @@
                   (.setArgs Option/UNLIMITED_VALUES)))
     (.addOption "d" "describe" false "Describe tasks")
     (.addOption "f" "file"     true  "Use taskfile instead of CLOAK")
-    (.addOption "t" "try"      false "Run Cloak but don't execute any actions (try)")
     (.addOption (doto (Option. "D" nil true "Set build propery")
                   (.setArgs 2)
                   (.setArgName "<property>=<value>")
@@ -59,10 +58,6 @@
 
                      #(if (has-option? "file")
                        (assoc % :file [(get-option "file")])
-                       %)
-
-                     #(if (has-option? "try")
-                       (assoc % :try true)
                        %)
 
                      #(if (has-option? "verbose")
