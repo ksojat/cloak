@@ -7,41 +7,13 @@
 ;; remove this notice, or any other, from this software.
 
 (ns cloak.core
-  (:use [clojure.set :exclude [project]]))
+  (:use
+    [clojure.set :exclude [project]]
+    cloak.utils))
 
 (import '(java.io File FileNotFoundException)
         '(org.apache.oro.text GlobCompiler)
         '(org.apache.oro.text.regex Perl5Matcher))
-
-;;
-;; Utility functions
-;;
-
-(defn throwf [& args]
-  (throw (Exception. (apply format args))))
-
-(defn tsort [graph start]
-  (let [visited (atom (list))
-        sort (fn sort [v back]
-               (cond
-                 ; Detect cycles
-                 (some #(= v %) back)
-                   (throwf "Cycle detected: %s <-> %s" v (last back))
-
-                 ; Check does node exists
-                 (not (contains? graph v))
-                   (throwf "Dependency %s for %s missing." (last back) v)
-
-                 :else
-                   (when-not (some #(= v %) @visited)
-                     (let [ns (graph v)]
-                       (if (not (empty? ns))
-                         (let [back (conj back v)]
-                           (doseq [n ns]
-                             (sort n back)))))
-                      (swap! visited conj v))))]
-    (sort start [])
-    @visited))
 
 ; Holds current active build.
 (declare *build*)
@@ -182,6 +154,39 @@
     (throwf "Can't define group %s, already defined." (:name x)))
 
   (update-in [:groups (:name x)] (dissoc x :name)))
+
+;;
+;; Properties.
+;;
+
+(defn genp [meta-data]
+  (with-meta (gensym "property__") (merge meta-data {:anonymous true})))
+
+(defn create-property [id resolve-fn expr-fn]
+  (let [name (cond
+               (symbol?  id) id
+               (keyword? id) (genp {:type id})
+               (map?     id) (genp id)
+               :else
+                 (throw (Exception. (str "Unsupported property id: " id))))]
+    {:name name, :resolve-fn resolve-fn, :expr-fn expr-fn}))
+
+(defmacro property
+;  ([id deps bindigns expr]
+;    `(create-property '~id (fn [] nil) (fn ~bindings ~expr)))
+
+;  ([id bindings expr]
+;    `(create-property '~id (fn [] nil) (fn ~bindings ~expr)))
+
+  ([id expr]
+    `(create-property '~id (fn [] nil) (fn [] ~expr))))
+
+(defmacro letp
+  ([bindings]
+    `(println "Not implemented for now"))
+
+  ([imports bindings]
+    `(println "Not implemented for now")))
 
 ;;
 ;; Build related functions.
