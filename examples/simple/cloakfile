@@ -1,42 +1,19 @@
-(ns build
-  (:import (java.io File))
-  (:requre [rosado.cloak :as cloak])
-  (:use
-    (rosado.cloak main actions)))
+(use '(cloak core tasks actions))
 
-(properties
-  base-dir (File. "."))
+#_(property src-dir (File. (File. "simple") "src"))
 
-(generated [base-dir]
-  (File. basedir "target"))
+(task
+  #^{:doc "Compile project's clojure files."}
+  aot #{}
+  (println "Aot"))
 
-(dependencies
-  {:org "org.clojure", :module "clojure", :rev "1.0.0"}
-  {:org "commons-cli", :module "commons-cli", :rev "1.2"})
+(task
+  #^{:doc "Package project's comiled classes."
+     :default true}
+  aot-jar #{'aot}
+  (println "Aot-jar"))
 
-(task retrieve #{} [deps (fn [cs] (filter #(= :dependency (type %)) cs))]
-  (ivy/retrieve deps))
-
-(task completitions
-  (println "Generate completitions for this project"))
-
-(task repl #{'completitions}
-  (println "Generating repl"))
-
-(task apidoc
-  (println "Generate api docs"))
-
-(task aot
-  (println "Generate classes"))
-
-(test jar #{'aot}
-  (println "Generate jar file"))
-
-(task dist #{'apidoc 'jar}
-  (println "Generate final distribution"))
-
-(task clean
-  (println "Clean project"))
-
-(task test #{'jar}
-  (println "Run project tests"))
+(task
+  #^{:doc "Remove files generated during the build."}
+  clean #{}
+  (println "clean"))

@@ -1,7 +1,4 @@
-;; simple build system in Clojure
-;; Roland Sadowski [szabla gmail com] http://www.haltingproblem.net
-
-;; Copyright (c) 2008 Roland Sadowski. All rights reserved.  The use and
+;; Copyright (c) 2009 Krešimir Šojat. All rights reserved.  The use and
 ;; distribution terms for this software are covered by the Common
 ;; Public License 1.0 (http://www.opensource.org/licenses/cpl1.0.php)
 ;; which can be found in the file CPL.TXT at the root of this
@@ -12,22 +9,11 @@
 (ns cloak.main
   (:import
     (java.lang System)
-    (java.io File)
     (org.apache.commons.cli
       Option Options GnuParser HelpFormatter UnrecognizedOptionException))
-  (:require [cloak.core :as core])
+  (:require
+    (cloak [core :as core] ant ivy logger))
   (:gen-class))
-
-;; Load extensions so they can register there listeners.
-(require 'cloak.ant
-         'cloak.ivy
-         'cloak.stats)
-
-(defn notice [& args]
-  (println (apply str " NOTICE: " args)))
-
-(defn error [& args]
-  (println (apply str " ERROR: " args)))
 
 (def cli-options
   (doto (Options.)
@@ -60,82 +46,6 @@
 (defn show-version []
   (println (format "Cloak v%s" (:version core/info)))
   (System/exit 0))
-
-#_(defn task-error
-  "Error handler function used for task failures."
-  [& args]
-  (println (apply str " [" (name *current-task*) " ]" args)))
-
-; TODO: Ovdje rebindati *build*
-(defn- load-tasks
-  "Loads tasks from input file and creates task-table for use by other fns"
-  [file]
-  (try
-    (load-file file)
-    (catch java.io.FileNotFoundException e
-      (error (format "Can't find cloak file \"%s\"." file))
-      (throw e))
-    (catch Exception e
-      (error (format "Loading cloak file \"%s\" failed." file))
-      (throw e))))
-
-(defn execute-task [& _]
-  (println "Placeholder, remove later"))
-
-(defn init-tasks [& _]
-  (println "Placeholder, remove later"))
-
-(defn run-tasks
-  "Run given tasks. Aborts on first failed task."
-  [kwords]
-  (println "Running tasks:" (apply str (interpose " "(map str kwords))))
-  (doseq [kw kwords]
-    (when-not (contains? (:tasks @core/*build*) kw)
-      (error "No such task:" kw)
-      (throw (Exception. "Specified task is not defined."))))
-  (doseq [kw kwords]
-    (try
-     (execute-task kw)
-     (catch Exception e
-       (error (.getMessage e))
-       (throw e)))))
-
-(defn print-desc
-  "Prints task descriptions."
-  [taskmap]
-  (newline)
-  (do
-    (doseq [t (for [key (keys taskmap)]
-                (assoc ((:tasks @core/*build*) key) :name key))]
-      (printf " %1$-16s" (if (keyword? (t :name)) (name (t :name)) (t :name)))
-      (if (t :desc)
-        (println (t :desc))
-        (newline)))))
-
-(defn find-cloakfile [{file :file cwd :cwd}]
-  (first
-    (filter #(.exists %)
-      (map #(File. (File. cwd) %) file))))
-
-(defn run-program [{:keys [describe targets] :as build}]
-  (println build)
-  (if-let [file (find-cloakfile build)]
-    (load-tasks (.getAbsolutePath file))
-    (do
-      (println "Can't find Cloak file.")
-      (System/exit 1)))
-
-  (try
-    (init-tasks)
-    (catch Exception e
-      (error "Error initializing tasks")
-      (error (.getMessage e))
-      (throw e)))
-  (try
-    (if describe
-      (print-desc (:tasks @core/*build*))
-      (run-tasks targets))))
-
 
 (defn -main [& args]
   (let [cmd         (cli-parse (or args (list "")))
@@ -172,22 +82,18 @@
       (show-version))
 
     ; Collect all properties.
-    (System/setProperties
-      (.putAll (System/getProperties) (.getOptionProperties cmd "D")))
+    (let [ps (System/getProperties)]
+      (doseq [[k v] (.getOptionProperties cmd "D")] (.setProperty ps k v))
+      (System/setProperties ps))
 
     (let [build (core/create-build settings)]
-      ; Collect all properties
-      (binding [core/*build* build]
-        (doseq [[k v] (.getOptionProperties cmd "D")]
-          (core/property k v))
+      (core/start-build! build)
+      ; TODO: Remove this binding
+      #_(binding [core/*build* build]
 
-          (core/emmit build ::core/build-started)
-          (Thread/sleep 1000)
-          (run-program @build); TODO: Rename this to start-build
-          (core/emmit build ::core/build-finished))
+          (core/start-build! build))
 
-      ;(println "Build created")
-      (println @build))))
+      #_(println @build))))
 
 ;; Standard run
 (when (and (not *compile-files*) (System/getProperty "cloak.runmain"))

@@ -10,39 +10,4 @@
   (:import (java.lang System))
   (:require [cloak.core :as core]))
 
-(defn now []
-  (System/currentTimeMillis))
 
-(defn elapsed-time [millis]
-  (let [sec (/ millis 1000)
-        min (/ sec 60)]
-    (format "%d minutes, %d seconds" (int min) (int (mod sec 60)))))
-
-(defn print-build-duration [{{start ::started finish ::finished} ::build}]
-  (println "Build time: " (elapsed-time (- finish start))))
-
-(core/on ::core/build-started
-  (fn [build]
-    (swap! build assoc-in [::build ::started] (now))))
-
-(core/on ::core/build-finished
-  (fn [build]
-    (swap! build assoc-in [::build ::finished] (now))
-    (print-build-duration @build)))
-
-(core/on ::core/build-failed
-  (fn [build]
-    (swap! build assoc ::build {::finished (now)})
-    (print-build-duration @build)))
-
-;(core/on ::core/task-started
-;  (fn [build name]
-;    (swap! build assoc ::task {name {:started (now)}})))
-
-;(core/on ::core/task-finished
-;  (fn [build & _]
-;    (println "Task finished")))
-
-;(core/on ::core/task-failed
-;  (fn [build & _]
-;    (println "Task failed")))

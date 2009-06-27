@@ -1,10 +1,3 @@
-(ns rosado.cloak-build
-  (:import (java.io File))
-  (:use [cloak.ant :only [ant]])
-  (:use cloak.main)
-  (:use cloak.actions)
-  (:use cloak.tasks))
-
 (import '(java.io File))
 
 (use
@@ -23,8 +16,16 @@
   (property dest (path "build" "cloak"))
   (property src (path "cloak" "src"))
 
-  (task completitions #{} [completitions]
-    (clojure-completitions 
+
+
+  (task completitions #{} [src completitions]
+    (clojure-completitions [src] (File. completitions)))
+
+  (task repl-rlwrap #{'completitions} [completitions]
+    (clojure-repl (File. "clojure-rlwrap.sh") :rlwrap {:completitions completitions}))
+
+  (task repl-jline #{}
+    
 
 (def props
   {:cp    "lib/*:cloak/src:cloak/resources"

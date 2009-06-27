@@ -9,7 +9,8 @@
 (ns cloak.core
   (:use [clojure.set :exclude [project]]))
 
-(import '(org.apache.oro.text GlobCompiler)
+(import '(java.io File FileNotFoundException)
+        '(org.apache.oro.text GlobCompiler)
         '(org.apache.oro.text.regex Perl5Matcher))
 
 ;;
@@ -18,6 +19,29 @@
 
 (defn throwf [& args]
   (throw (Exception. (apply format args))))
+
+(defn tsort [graph start]
+  (let [visited (atom (list))
+        sort (fn sort [v back]
+               (cond
+                 ; Detect cycles
+                 (some #(= v %) back)
+                   (throwf "Cycle detected: %s <-> %s" v (last back))
+
+                 ; Check does node exists
+                 (not (contains? graph v))
+                   (throwf "Dependency %s for %s missing." (last back) v)
+
+                 :else
+                   (when-not (some #(= v %) @visited)
+                     (let [ns (graph v)]
+                       (if (not (empty? ns))
+                         (let [back (conj back v)]
+                           (doseq [n ns]
+                             (sort n back)))))
+                      (swap! visited conj v))))]
+    (sort start [])
+    @visited))
 
 ; Holds current active build.
 (declare *build*)
@@ -33,11 +57,12 @@
 
 (def
   #^{:doc
-      "Set of global event listeners. Every listener will be added to
-       newly created build automaticaly and to every already created
-       build.
-       If listener is removed from global listeners it will be removed
-       from all active builds too."}
+      (str
+        "Set of global event listeners. Every listener will be added to "
+        "newly created build automaticaly and to every already created "
+        "build."
+        "If listener is removed from global listeners it will be removed"
+        "from all active builds too.")}
   global-listeners (atom {}))
 
 (defn on
@@ -50,6 +75,113 @@
 (defn emmit [build event & args]
   (doseq [f (mapcat event [(:listeners @build) global-listeners])]
     (apply f build args)))
+
+;;
+;; Build Collectors.
+;;
+
+(def *collector* identity)
+
+(defn with-collector* [collector-fn body-fn]
+  (reduce
+    collector-fn
+    {}
+    (let [data (atom [])]
+      (binding [*collector* #(swap! data conj %)]
+        (body-fn))
+      @data)))
+
+(defmacro with-collector [collector-fn & body]
+  `(with-collector* ~collector-fn (fn [] ~@body)))
+
+(defn add-property [data {xn :name :as x}]
+  (when (get-in data [:properties xn])
+    (throwf "Property %s already defined." xn))
+
+  (update-in data [:properties xn] (dissoc x :name)))
+
+(defn add-task [data {xn :name :as x}]
+  (when (get-in data [:tasks xn])
+    (throwf "Task %s already defined." xn))
+
+  (update-in data [:tasks xn] (dissoc x :name)))
+
+(defn add-group [data {xn :name :as x}]
+  (when (get-in data [:groups xn])
+    (throwf "Group %s already defined." xn))
+
+  (update-in data [:groups xn] (dissoc x :name)))
+
+(defmulti
+  #^{:doc (str "Build collector user primary to collect build elements from "
+               "cloakfile files.")}
+  main-collector
+  (fn [data x] (type x)))
+
+(defmethod main-collector :Property [data x]
+  (when (:group data)
+    (throwf "Can't define property outside of main build group."))
+
+  (add-property data x))
+
+(defmethod main-collector ::Task [data x]
+  (when (:group data)
+    (throw "Can't define task outside of main build group."))
+
+  (add-task data x))
+
+(defmethod main-collector :TopGroup [{pm :properties tm :tasks g :group :as data} x]
+  (when g
+    (throwf "Can't redefine topleve build group."))
+
+  (when (or pm tm)
+    (throwf
+      (str "Can't define toplevel build group, tasks or properties are "
+           "already declared.")))
+
+  (assoc data :group g))
+
+(defmethod main-collector :SubGroup [_ x]
+  (throwf "Can't create sub group outside of toplevel build group."))
+
+(defmulti
+  #^{:doc (str "Collector used to collect build elements inside top-level "
+               "build group.")}
+  top-collector
+  (fn [data x] (type x)))
+
+(defmethod top-collector :Property [data x]
+  (add-property data x))
+
+(defmethod top-collector ::Task [data x]
+  (add-task data x))
+
+(defmethod top-collector :TopGroup [_ x]
+  (throwf "Can't define toplevel build group inside another group."))
+
+(defmethod top-collector :SubGroup [{gm :groups :as data} x]
+  (when (get gm (:name x))
+    (throwf "Can't define group %s, already defined." (:name x))))
+
+(defmulti
+  #^{:doc "Collector used to collect build elements inside sub group."}
+  sub-collector
+  (fn [data x] (type x)))
+
+(defmethod sub-collector :Property [data x]
+  (add-property data x))
+
+(defmethod sub-collector ::Task [data x]
+  (add-task data x))
+
+(defmethod sub-collector :TopGroup [_ x]
+  (throwf "Can't define top level group inside another group."))
+
+(defmethod sub-collector :SubGroup [{gm :groups :as data} x]
+  (when (get gm (:name x))
+    (throwf "Can't define group %s, already defined." (:name x)))
+
+  (update-in [:groups (:name x)] (dissoc x :name)))
 
 ;;
 ;; Build related functions.
@@ -75,7 +207,7 @@
    :file      ["cloakfile" "cloakfile.clj"]
    :describe  false
    :verbose   false
-   :targets   [:default]
+   :targets   []; TODO: Autodiscover defaults
    :tasks     {}
    :queue     []; TODO ???
    :cwd       (System/getProperty "user.dir" "")
@@ -88,6 +220,39 @@
     ; Notify all listeners that build was initialized.
     (emmit build ::build-created)
     build))
+
+(defn find-cloakfile [files cwd]
+  (first
+    (filter #(.exists %)
+      (map #(File. (File. cwd) %) files))))
+
+(defn load-cloakfile! [build]
+  (let [files (:file @build), cwd (:cwd @build)]
+    (if-let [file (find-cloakfile files cwd)]
+      (do
+        (emmit build ::cloakfile-found file)
+        (try
+          (println; TODO: Remove this
+            (with-collector main-collector
+              (load-file (.getAbsolutePath file))))
+
+          (catch FileNotFoundException e
+            (emmit build ::cloakfile-missing files)
+            (System/exit 1))
+
+          (catch Exception e
+            (emmit build ::cloakfile-failed file e)
+            (System/exit 1))))
+      (do
+        (emmit build ::cloakfile-missing files)
+        (System/exit 1)))))
+
+; TODO: If its describe, describe only and exit
+(defn start-build! [build]
+  ;(println build)
+  (emmit build ::build-started)
+  (load-cloakfile! build)
+  (emmit build ::build-finished))
 
 ;;
 ;; Task ids
@@ -148,7 +313,6 @@
 ;; Tasks.
 ;;
 
-(def *collector* identity)
 
 (defmulti create-task
   (fn [type & _] type))
@@ -160,7 +324,7 @@
 ;       the only taks base.
 (defmacro deftask [type & fn-tail]
   `(do
-      (derive ~type ::TaskBase)
+      (derive ~type ::Task)
       (defmethod create-task ~type ~@fn-tail)))
 
 (defn resolve-1 [{d :deps, r :resolve :as task} ts]
@@ -178,8 +342,8 @@
     (map #(resolve-1 % ts) tasks)))
 
 ; TODO: Remove this
-(defmethod print-method ::TaskBase [t #^java.io.Writer w]
-  (.write w (str "Task: " (:name t))))
+;(defmethod print-method ::TaskBase [t #^java.io.Writer w]
+;  (.write w (str "Task: " (:name t))))
 
 (defmacro project [name & specs])
 

@@ -50,11 +50,12 @@ Python Distutils.
 <pre>
 (project helloworld
 
-  (description
+  (info
     :name "Hello World"
     :author "Clojurian"
     :license {:name "Eclipse Public License"
-              :url  "http://www.eclipse.org/legal/epl-v10.html"})
+              :url  "http://www.eclipse.org/legal/epl-v10.html"}
+    :desc "Hello World project")
 
   (dependencies
     "org.clojure:clojure:1.0.0"))
@@ -91,6 +92,44 @@ in the current working directory, you can specify alternative file using the
 <p>
 <strong>TODO:</strong> Explain other command line options.
 </p>
+
+<a class='top' href='#top'><span>Top</span></a>
+</div>
+
+<!--
+?. Chapter
+-->
+<div>
+<h1>?. Tasks and properties</h1>
+
+<p>
+<strong>TODO:</strong> Describe basic property and task syntax.
+</p>
+
+<pre>
+; Simple property
+(property a
+    42)
+
+; Property that depends on property 'a'
+(property b [a]
+    (+ a 1))
+
+; Properties can have metadata attached on them.
+(property #^{:foo :bar} c [b]
+    (inc b))
+
+; Properties can be anonymous and declared only by :type metadata
+(property :GeneratedFile
+    "path/to/file1.txt")
+
+(property :GeneratedFile
+    "path/to/file2.txt")
+
+; And they can depend on properties by type and not by name
+(property d [:GeneratedFile] [gs]
+    (apply str (interpose ", " gs)))
+</pre>
 
 <a class='top' href='#top'><span>Top</span></a>
 </div>

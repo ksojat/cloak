@@ -18,22 +18,37 @@
 (defmacro fragmet [group & body]
   `(println "wee fragment"))
 
+(defn create-fragment [name deps expand-fn]
+  {:name name, :deps deps, :expand-fn expand-fn})
+
+; TODO: Fix this
+(defmacro fragment [name fragment-deps property-deps property-bindings & body]
+  `(create-fragment ~name ~fragment-deps
+     (fn [props#]
+       ~@body)))
+
 (defn load-fragment [& fs]
   nil)
 
-(fragment :ProjectBase [] [group]
+(fragment :ProjectBase [] [] [group]
   ; Calculate project base directory.
   (property :BaseDir
     (File. (System/getProperty "user.home")))
+
+  (property :ProjectDir [:BaseDir] [base-dir]
+    base-dir)
 
   ; Create a module base directory generator.
   (property :BaseDirFn [:BaseDir] [base-dir]
     (base-fn base-dir)))
 
-(fragment :ModuleBase [:BaseDirFn] [group make-base]
+(fragment :ModuleBase [] [:BaseDirFn :ProjectDir] [group make-base project-dir]
   ; Calculate module base directory.
   (property :BaseDir
     (make-base group))
+
+  (property :ProjectDir
+    project-dir)
 
   ; Create a submodule base directory generator.
   (property :BaseDirFn [:BaseDir] [base-dir]

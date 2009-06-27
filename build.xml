@@ -123,7 +123,7 @@
             <arg value='cloak.ivy'/>
             <arg value='cloak.core'/>
             <arg value='cloak.tasks'/>
-            <arg value='cloak.stats'/>
+            <arg value='cloak.logger'/>
 		</java>
 	</target>
 

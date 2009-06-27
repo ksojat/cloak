@@ -209,3 +209,8 @@
   (let [publics (concat standard-publics (project-publics src-dirs))]
     (string-to-file dest-file
       (apply str (interleave publics (repeat "\n"))))))
+
+;(defmulti compile (fn [type & _] type))
+
+;(defmethod compile :clojure [_ src-dirs dest-dir]
+  
