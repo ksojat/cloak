@@ -15,7 +15,6 @@ You can also use the following options:
 * `-h` to display help
 * `-f cloak_file` to use non default cloak file
 * `-d` to describe available task
-* `-t` run cloak without executing any actions
 
 You can also specify a series of task names (without leading colons),
 which will be executed in sequence (from left to right).
