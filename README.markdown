@@ -1,7 +1,6 @@
 # CLOAK #
 
-Cloak is a simplistic automation tool written in [Clojure][]. It's heavily
-inspired by ruby [rake][].
+Cloak is a project automation tool written in [Clojure][].
 
 Usage
 ----------

@@ -187,10 +187,10 @@
 ;; Build related functions.
 ;;
 
-(defn add-property! [build key value]
+#_(defn add-property! [build key value]
   (swap! build assoc-in [:properties key] value))
 
-(defn property
+#_(defn property
   ([key value]
     (add-property! *build* key value)
     (emmit *build* ::property key value))
@@ -198,6 +198,7 @@
   ([key]
     (get-in @*build* [:properties key])))
 
+; TODO: Update log to use emmit function
 (defn log [level & args]
   (println (apply str " " (.toUpperCase (name level)) ": " args)))
 

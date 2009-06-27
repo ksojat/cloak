@@ -15,10 +15,6 @@
     {:name (if (list? name) name (list name)), :resolve (resolver deps), :f f}
     {:type ::Task}))
 
-;(defmacro task [name deps & body]
-;  `(*collector*
-;     (create-task ::Task '~name ~deps (fn [] ~@body))))
-
 (defmacro task [name deps props & body]
   `(*collector*
      (create-task ::Task '~name ~deps (fn [] ~@body))))
