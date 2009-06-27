@@ -37,8 +37,9 @@ Syntax
 
 Tasks:
 
-		(task task-name #{'task 'other-task}
-			  "Task description"
+		(task
+            #^{:doc "Task description"}
+            task-name #{'task 'other-task}
 			  (action1 arg)
 			  (action args))
 
@@ -49,21 +50,7 @@ task name.
 Compiling Cloak
 ---------------
 
-To compile Cloak run `ant compile` or `ant jar`.
-
-Compiling Clojure sources
--------------------------
-
-It works (look at this project's CLOAK file) but the following must be
-true for it to work:
-
-* directory with sources *AND* "classes" directory must be in your classpath
-* the "classes" directory must exists when the JVM starts up to execute the `compile` function (otherwise strange errors might occur).
-
-What it isn't
--------------
-
-It's not an `ant` or `maven` replacement.
+To compile Cloak run `ant jar`.
 
 TODO
 ----------
@@ -73,6 +60,4 @@ TODO
 * better error reporting
 
 [rake]:http://rake.rubyforge.org/
-[mylibs]:https://github.com/rosado/libs4clj/tree
 [clojure]:http://clojure.org/
-[contrib]:http://sourceforge.net/projects/clojure-contrib
