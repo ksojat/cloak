@@ -14,18 +14,9 @@ You can also use the following options:
 * `-h` to display help
 * `-f cloak_file` to use non default cloak file
 * `-d` to describe available task
+* `-q` to specify a series of task names witch will be executed by Cloak
 
-You can also specify a series of task names (without leading colons),
-which will be executed in sequence (from left to right).
-
-Cloak provides two kinds of tasks: tasks and file tasks.
-
-File tasks are geared towards *creating* files. Dependencies of a file
-task can be other files and tasks. If a dependency is a file,
-modification time of source and target files is compared before
-executing the task.
-
-rosado.cloak.actions provides a couple of basic file operations:
+cloak.actions provides a couple of basic file operations:
 `exists?`, `copy` , `move`, `rm`, `sh` (executing a shell
 command). Windows users must be careful to use a "cmd ..." as a
 parameter to `sh` when running a batch script.
@@ -49,13 +40,6 @@ Compiling Cloak
 ---------------
 
 To compile Cloak run `ant jar`.
-
-TODO
-----------
-
-* copying files over ssh
-* more complete set of actions for file operations
-* better error reporting
 
 [rake]:http://rake.rubyforge.org/
 [clojure]:http://clojure.org/
