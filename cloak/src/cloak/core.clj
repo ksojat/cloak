@@ -58,7 +58,6 @@
     (let [data (atom [])]
       (binding [*collector* #(swap! data conj %)]
         (body-fn))
-      (println data)
       @data)))
 
 (defmacro with-collector [collector-fn & body]
@@ -68,19 +67,19 @@
   (when (get-in data [:properties xn])
     (throwf "Property %s already defined." xn))
 
-  (update-in data [:properties xn] (dissoc x :name)))
+  (assoc-in data [:properties xn] (dissoc x :name)))
 
 (defn add-task [data {xn :name :as x}]
   (when (get-in data [:tasks xn])
     (throwf "Task %s already defined." xn))
 
-  (update-in data [:tasks xn] (dissoc x :name)))
+  (assoc-in data [:tasks xn] (dissoc x :name)))
 
 (defn add-group [data {xn :name :as x}]
   (when (get-in data [:groups xn])
     (throwf "Group %s already defined." xn))
 
-  (update-in data [:groups xn] (dissoc x :name)))
+  (assoc-in data [:groups xn] (dissoc x :name)))
 
 (defmulti
   #^{:doc (str "Build collector user primary to collect build elements from "
@@ -151,11 +150,15 @@
   (when (get gm (:name x))
     (throwf "Can't define group %s, already defined." (:name x)))
 
-  (update-in [:groups (:name x)] (dissoc x :name)))
+  (assoc-in [:groups (:name x)] (dissoc x :name)))
 
 ;;
 ;; Properties.
 ;;
+
+#_(defn eval-properties [props]
+  
+  (lala))
 
 (defn genp [meta-data]
   (with-meta (gensym "property__") (merge meta-data {:anonymous true})))
@@ -166,7 +169,7 @@
                (keyword? id) (genp {:type id})
                (map?     id) (genp id)
                :else
-                 (throw (Exception. (str "Unsupported property id: " id))))]
+                 (throwf "Unsupported property id: %s" id))]
     #^{:type :Property} {:name name, :resolve-fn resolve-fn, :expr-fn expr-fn}))
 
 (defmacro property

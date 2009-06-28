@@ -6,31 +6,41 @@
 ;; agreeing to be bound by the terms of this license.  You must not
 ;; remove this notice, or any other, from this software.
 
-(ns cloak.utils)
+(ns cloak.utils
+  (:use clojure.set))
 
 (defn throwf [& args]
   (throw (Exception. (apply format args))))
 
-(defn tsort [graph start]
-  (let [visited (atom (list))
-        sort (fn sort [v back]
-               (cond
-                 ; Detect cycles
-                 (some #(= v %) back)
-                   (throwf "Cycle detected: %s <-> %s" v (last back))
+(defn tsort
+  ([graph start]
+    (let [hidden (gensym)
+          graph  (assoc graph hidden start)
+          visited (atom [])
+          sort (fn sort [v back]
+                 (cond
+                   ; Detect cycles
+                   (some #(= v %) back)
+                     (throwf "Cycle detected: %s <-> %s" v (last back))
 
-                 ; Check does node exists
-                 (not (contains? graph v))
-                   (throwf "Dependency %s for %s missing." (last back) v)
+                   ; Check does node exists
+                   (not (contains? graph v))
+                     (throwf "Dependency %s for %s missing." (last back) v)
 
-                 :else
-                   (when-not (some #(= v %) @visited)
-                     (let [ns (graph v)]
-                       (if (not (empty? ns))
-                         (let [back (conj back v)]
-                           (doseq [n ns]
-                             (sort n back)))))
-                      (swap! visited conj v))))]
-    (sort start [])
-    @visited))
+                   :else
+                     (when-not (some #(= v %) @visited)
+                       (let [ns (graph v)]
+                         (if (not (empty? ns))
+                           (let [back (conj back v)]
+                             (doseq [n ns]
+                               (sort n back)))))
+                        (swap! visited conj v))))]
+      (sort hidden [])
+      (drop-last @visited)))
 
+  ([graph]
+    (let [start (difference
+                  (set (keys graph)) (into #{} (mapcat (fn [[k v]] v) graph)))]
+      (if (empty? start)
+        (throwf "Graph is not a DAG.")
+        (tsort graph start)))))
