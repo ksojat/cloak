@@ -15,9 +15,6 @@
         '(org.apache.oro.text GlobCompiler)
         '(org.apache.oro.text.regex Perl5Matcher))
 
-; Holds current active build.
-(declare *build*)
-
 (def info
   {:version "0.1a"
    :authors [{:name "Roland Sadowski" :email "szabla gmail com"}
@@ -61,6 +58,7 @@
     (let [data (atom [])]
       (binding [*collector* #(swap! data conj %)]
         (body-fn))
+      (println data)
       @data)))
 
 (defmacro with-collector [collector-fn & body]
@@ -169,17 +167,20 @@
                (map?     id) (genp id)
                :else
                  (throw (Exception. (str "Unsupported property id: " id))))]
-    {:name name, :resolve-fn resolve-fn, :expr-fn expr-fn}))
+    #^{:type :Property} {:name name, :resolve-fn resolve-fn, :expr-fn expr-fn}))
 
 (defmacro property
-;  ([id deps bindigns expr]
-;    `(create-property '~id (fn [] nil) (fn ~bindings ~expr)))
+  ([id deps bindings expr]
+    `(*collector*
+       (create-property '~id (fn [] nil) (fn ~bindings ~expr))))
 
-;  ([id bindings expr]
-;    `(create-property '~id (fn [] nil) (fn ~bindings ~expr)))
+  ([id bindings expr]
+    `(*collector*
+       (create-property '~id (fn [] nil) (fn ~bindings ~expr))))
 
   ([id expr]
-    `(create-property '~id (fn [] nil) (fn [] ~expr))))
+    `(*collector*
+       (create-property '~id (fn [] nil) (fn [] ~expr)))))
 
 (defmacro letp
   ([bindings]
@@ -191,17 +192,6 @@
 ;;
 ;; Build related functions.
 ;;
-
-#_(defn add-property! [build key value]
-  (swap! build assoc-in [:properties key] value))
-
-#_(defn property
-  ([key value]
-    (add-property! *build* key value)
-    (emmit *build* ::property key value))
-
-  ([key]
-    (get-in @*build* [:properties key])))
 
 ; TODO: Update log to use emmit function
 (defn log [level & args]

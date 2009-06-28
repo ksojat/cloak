@@ -1,6 +1,7 @@
 (use '(cloak core tasks actions))
+(import '(java.io File))
 
-#_(property src-dir (File. (File. "simple") "src"))
+(property src-dir (File. (File. "simple") "src"))
 
 (task
   #^{:doc "Compile project's clojure files."}

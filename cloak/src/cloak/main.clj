@@ -82,13 +82,7 @@
       (System/setProperties ps))
 
     (let [build (core/create-build settings)]
-      (core/start-build! build)
-      ; TODO: Remove this binding
-      #_(binding [core/*build* build]
-
-          (core/start-build! build))
-
-      #_(println @build))))
+      (core/start-build! build))))
 
 ;; Standard run
 (when (and (not *compile-files*) (System/getProperty "cloak.runmain"))
