@@ -84,7 +84,6 @@
     (let [build (core/create-build settings)]
       (core/start-build! build))))
 
-;; Standard run
+;; Standard run (no need for aot)
 (when (and (not *compile-files*) (System/getProperty "cloak.runmain"))
-  (println "Running cloak from source file")
   (apply -main *command-line-args*))

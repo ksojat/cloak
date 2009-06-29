@@ -11,6 +11,8 @@
     [clojure.set :exclude [project]]
     cloak.utils))
 
+(import '(clojure.lang Symbol Fn Keyword))
+
 (import '(java.io File FileNotFoundException)
         '(org.apache.oro.text GlobCompiler)
         '(org.apache.oro.text.regex Perl5Matcher))
@@ -156,6 +158,20 @@
 ;; Properties.
 ;;
 
+(defmulti property-resolver class)
+
+(defmethod property-resolver Fn [pred]
+  #(filter pred %))
+
+(defmethod property-resolver Symbol [s]
+  (fn [pm]
+    (let [x (property-resolver #(= s %))
+          r (first (x pm))]; TODO: Throw if no r found
+      r)))
+
+(defmethod property-resolver Keyword [k]
+  (property-resolver #(= k (type %))))
+
 (defn resolve-properties [pm]
   (reduce
     (fn [pm [k v]]
@@ -173,7 +189,6 @@
       (fn [m [k v]]
         (assoc m k
           (let [deps (:deps v)
-                args (select-keys m deps)
                 args (map #(get m %) deps)]
             (apply (:expr-fn v) args))))
       {}
