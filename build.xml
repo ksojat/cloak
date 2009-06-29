@@ -1,8 +1,21 @@
-<project name="cloak" default="props" basedir="." xmlns:ivy='antlib:org.apache.ivy.ant'>
+<project name="cloak" default="jar" basedir="." xmlns:ivy='antlib:org.apache.ivy.ant'>
 
-    <description>
-	A simple build system for Clojure.
-    </description>
+    <macrodef name='cloak'>
+        <attribute name='classpath'    default=''/>
+        <attribute name='classpathref' default=''/>
+        <element   name='args' optional='true' implicit='true'/>
+        <sequential>
+            <java
+                fork='true'
+                classname='clojure.main'
+                classpath='@{classpath}'
+                classpathref='@{classpathref}'>
+                <arg value='@cloak/main.clj'/>
+                <sysproperty key='cloak.runmain' value='true'/>
+                <args/>
+            </java>
+        </sequential>
+    </macrodef>
 
 	<!-- PROPERTIES -->
     <property name='etc.dir' location='${basedir}/etc'/>
@@ -61,11 +74,6 @@
 		<path location="${cloak.classes.dir}"/>
 	</path>
 
-	<path id="run.classpath">
-        <path refid="compile.classpath"/>
-		<path location="${cloak.classes.dir}"/>
-	</path>
-
 	<target name="init" depends='getivy'>
 	</target>
 
@@ -113,6 +121,10 @@
 					description="Compile Clojure sources"
           depends="init, resolve">
         <mkdir dir='${cloak.classes.dir}'/>
+        <!--<cloak
+            classpath='${cloak.classes.dir}'
+            classpathref='cloak.compile.classpath'>
+        </cloak>-->
 		<java classname="clojure.lang.Compile"
           classpath="${cloak.classes.dir}">
 			<sysproperty key="clojure.compile.path" value="${cloak.classes.dir}" />
@@ -131,15 +143,6 @@
           description="Compile Cloak.">
 	</target>
 	
-  <target name="run">
-		<java classname="rosado.cloak"
-					classpathref="run.classpath"
-          fork="true"
-          spawn="false">
-      <sysproperty key="java.library.path" path="${native.lib.dir}" />
-		</java>
-    </target>
-
     <target name='test'>
         <java
             classname='clojure.lang.Script'
@@ -152,19 +155,11 @@
   <target name="jar" depends="compile"
           description="Package compiled *.class files into a jar.">
     <mkdir dir='${dist.dir}'/>
-    <!--<jar destfile="${cloak.jar}" basedir="${cloak.classes.dir}"/>-->
     <jar destfile='${cloak.jar}'>
         <fileset dir='${cloak.classes.dir}'/>
         <fileset dir='${cloak.resources.dir}'/>
     </jar>
   </target>
-
-
-	<!-- UTIL TARGETS -->
-
-	<target name="props">
-		<echoproperties />
-	</target>
 
     <!--
     Ivy targets.

@@ -86,4 +86,5 @@
 
 ;; Standard run
 (when (and (not *compile-files*) (System/getProperty "cloak.runmain"))
-  (-main *command-line-args*))
+  (println "Running cloak from source file")
+  (apply -main *command-line-args*))

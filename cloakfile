@@ -3,76 +3,76 @@
 (use
   ['cloak.ant :only ['ant]]
   'cloak.main
-  'cloak.project
+  ;'cloak.project
   'cloak.actions
   'cloak.tasks)
 
-(defn path [& segments]
-  (reduce (fn [base seg] (if base (File. base seg) (File. seg))) segments))
+;(defn path [& segments]
+;  (reduce (fn [base seg] (if base (File. base seg) (File. seg))) segments))
 
-(project cloak
-  (property cp "lib/*:cloak/src:cloak/resources")
-  (property completitions ".completitions")
-  (property dest (path "build" "cloak"))
-  (property src (path "cloak" "src"))
+;(project cloak
+;  (property cp "lib/*:cloak/src:cloak/resources")
+;  (property completitions ".completitions")
+;  (property dest (path "build" "cloak"))
+;  (property src (path "cloak" "src"))
 
 
 
-  (task completitions #{} [src completitions]
-    (clojure-completitions [src] (File. completitions)))
+;  (task completitions #{} [src completitions]
+;    (clojure-completitions [src] (File. completitions)))
 
-  (task repl-rlwrap #{'completitions} [completitions]
-    (clojure-repl (File. "clojure-rlwrap.sh") :rlwrap {:completitions completitions}))
+;  (task repl-rlwrap #{'completitions} [completitions]
+;    (clojure-repl (File. "clojure-rlwrap.sh") :rlwrap {:completitions completitions}))
 
-  (task repl-jline #{}
+;  (task repl-jline #{}
     
 
-(def props
-  {:cp    "lib/*:cloak/src:cloak/resources"
-   :completitions ".completitions"
-   :dest  (path "build" "cloak")
-   :src   (path "cloak" "src")})
+;(def props
+;  {:cp    "lib/*:cloak/src:cloak/resources"
+;   :completitions ".completitions"
+;   :dest  (path "build" "cloak")
+;   :src   (path "cloak" "src")})
 
-(task :anttest
-  (ant :echo {:message "Hi"}))
+;(task :anttest
+;  (ant :echo {:message "Hi"}))
 
-(task :completitions
-  (clojure-completitions [(:src props)] (File. (:completitions props))))
+;(task :completitions
+;  (clojure-completitions [(:src props)] (File. (:completitions props))))
 
-(task :repl-rlwrap [:completitions]
-  (clojure-repl (File. "clojure-rlwrap.sh") :rlwrap props)
-  (println "manual step: chmod +x clojure-rlwrap.sh"))
+;(task :repl-rlwrap [:completitions]
+;  (clojure-repl (File. "clojure-rlwrap.sh") :rlwrap props)
+;  (println "manual step: chmod +x clojure-rlwrap.sh"))
 
-(task :repl-jline
-  (clojure-repl (File. "clojure-jline.sh") :jline props)
-  (println "There is no jline in cloak.")
-  (println "manual step: chmod +x clojure-jline.sh"))
+;(task :repl-jline
+;  (clojure-repl (File. "clojure-jline.sh") :jline props)
+;  (println "There is no jline in cloak.")
+;  (println "manual step: chmod +x clojure-jline.sh"))
 
-(task :repl-standard
-  (clojure-repl (File. "clojure-standard.sh") :standard props)
-  (println "manual step: chmod +x clojure-standard.sh"))
+;(task :repl-standard
+;  (clojure-repl (File. "clojure-standard.sh") :standard props)
+;  (println "manual step: chmod +x clojure-standard.sh"))
 
-(task :compile
-  "Compile Cloak."
-  (clojurec [(:src props)] (:dest props)))
+;(task :compile
+;  "Compile Cloak."
+;  (clojurec [(:src props)] (:dest props)))
 
-(task :clean
-      "Removes the 'classes' directory "
-      (when (exists? "classes/rosado")
-        (rm "classes/rosado")))
+;(task :clean
+;      "Removes the 'classes' directory "
+;      (when (exists? "classes/rosado")
+;        (rm "classes/rosado")))
 
-(task :jar-src
-      "Creates a jar file with Cloak's sources"
-      (sh "jar cf bin/rosado.cloak.jar rosado" :dofail))
+;(task :jar-src
+;      "Creates a jar file with Cloak's sources"
+;      (sh "jar cf bin/rosado.cloak.jar rosado" :dofail))
 
-(task :jar
-  "Create a jar file with compiled Cloak class files."
+;(task :jar
+;  "Create a jar file with compiled Cloak class files."
 
-  (when-not (exists? "bin")
-    (mkdir "bin"))
-  (ant :jar {:destfile "bin/cloak.jar"}
-    [:fileset {:dir "build/cloak/classes"}]
-    [:fileset {:dir "cloak/resources"}]))
+;  (when-not (exists? "bin")
+;    (mkdir "bin"))
+;  (ant :jar {:destfile "bin/cloak.jar"}
+;    [:fileset {:dir "build/cloak/classes"}]
+;    [:fileset {:dir "cloak/resources"}]))
 
 ; TODO: Restore later, no global bindings
 ;(task :test

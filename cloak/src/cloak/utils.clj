@@ -14,6 +14,7 @@
 
 (defn tsort
   ([graph start]
+    (println start)
     (let [hidden (gensym)
           graph  (assoc graph hidden start)
           visited (atom [])
@@ -39,6 +40,7 @@
       (drop-last @visited)))
 
   ([graph]
+    ; TODO: Fix this
     (let [start (difference
                   (set (keys graph)) (into #{} (mapcat (fn [[k v]] v) graph)))]
       (if (empty? start)

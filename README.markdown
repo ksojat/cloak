@@ -39,7 +39,6 @@ task name.
 Compiling Cloak
 ---------------
 
-To compile Cloak run `ant jar`.
+To compile Cloak run `ant`.
 
-[rake]:http://rake.rubyforge.org/
 [clojure]:http://clojure.org/

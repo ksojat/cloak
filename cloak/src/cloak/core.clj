@@ -156,9 +156,28 @@
 ;; Properties.
 ;;
 
-#_(defn eval-properties [props]
-  
-  (lala))
+(defn resolve-properties [pm]
+  (reduce
+    (fn [pm [k v]]
+      (assoc pm k
+        (assoc v :deps ((:resolve-fn v)))))
+    {}
+    pm))
+
+(defn eval-properties [pm]
+  (let [pm    (resolve-properties pm)
+        pg    (into {} (map (fn [[k v]] [k (:deps v)]) pm))
+        order (tsort pg)]
+    (println
+    (reduce
+      (fn [m [k v]]
+        (assoc m k
+          (let [deps (:deps v)
+                args (select-keys m deps)
+                args (map #(get m %) deps)]
+            (apply (:expr-fn v) args))))
+      {}
+      pm))))
 
 (defn genp [meta-data]
   (with-meta (gensym "property__") (merge meta-data {:anonymous true})))
@@ -175,15 +194,16 @@
 (defmacro property
   ([id deps bindings expr]
     `(*collector*
-       (create-property '~id (fn [] nil) (fn ~bindings ~expr))))
+       (create-property '~id (fn [] '~deps) (fn ~bindings ~expr))))
 
+  ; TODO: Check are all bindings symbols
   ([id bindings expr]
     `(*collector*
-       (create-property '~id (fn [] nil) (fn ~bindings ~expr))))
+       (create-property '~id (fn [] '~bindings) (fn ~bindings ~expr))))
 
   ([id expr]
     `(*collector*
-       (create-property '~id (fn [] nil) (fn [] ~expr)))))
+       (create-property '~id (fn [] #{}) (fn [] ~expr)))))
 
 (defmacro letp
   ([bindings]
@@ -231,9 +251,12 @@
       (do
         (emmit build ::cloakfile-found file)
         (try
-          (println; TODO: Remove this
+          #_(println; TODO: Remove this
             (with-collector main-collector
               (load-file (.getAbsolutePath file))))
+          (let [x (with-collector main-collector
+                    (load-file (.getAbsolutePath file)))]
+            (println (eval-properties (:properties x))))
 
           (catch FileNotFoundException e
             (emmit build ::cloakfile-missing files)
