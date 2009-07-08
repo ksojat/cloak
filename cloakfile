@@ -1,11 +1,30 @@
-(import '(java.io File))
+(use 'cloak.project)
 
-(use
-  ['cloak.ant :only ['ant]]
-  'cloak.main
-  ;'cloak.project
-  'cloak.actions
-  'cloak.tasks)
+(project cloak
+  [:lang :clojure]
+
+  (info
+    :name     "Cloak"
+    :version  "0.1a"
+    :license  {:name "Common Public License 1.0"
+               :url  "http://www.opensource.org/licenses/cpl1.0.php"}
+    :homepage "http://github.com/ksojat/cloak/tree/master"
+    :description
+      "Cloak is system for building, packaging and distributing Clojure libraries.")
+
+  (repositories
+    {:name    "main"
+     :type    :packager
+     :pattern "[organisation]/[module]/[revision]"})
+
+  (dependencies
+    "org.clojure:clojure:1.0.0"
+    #_{:lib "commons-io:commons-io:1.4"
+     :exclude [{:org "junit"}]}
+    #_{:org  "org.apache.ant"
+     :name "ant"
+     :rev  "1.7.1"
+     :artifact ["ant"]}))
 
 ;(defn path [& segments]
 ;  (reduce (fn [base seg] (if base (File. base seg) (File. seg))) segments))

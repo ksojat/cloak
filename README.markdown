@@ -6,8 +6,8 @@ Usage
 ----------
 
 When invoked from a command line without parameters, `cloak` looks for
-a file named `CLOAK` in the current directory (this file should define
-tasks to be performed) and executes `:default` task.
+a file named `cloakfile` or `cloakfile.clj' in the current directory (this file should define
+tasks to be performed) and executes task flaged as `default`.
 
 You can also use the following options:
 

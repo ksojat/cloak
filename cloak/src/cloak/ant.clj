@@ -41,7 +41,7 @@
     (when (and key value)
       (.setProperty (::project @build) key value))))
 
-(defn unknown-element [el-name & specs]
+#_(defn unknown-element [el-name & specs]
   (let [ue (doto (UnknownElement. (name el-name))
              ;(.setProject +project+))
              (.setProject (::project @core/*build*)))
@@ -59,6 +59,6 @@
     (.maybeConfigure ue)
     ue))
 
-(defn ant [& args]
+#_(defn ant [& args]
   (let [t (apply unknown-element args)]
     (.. t getRealThing execute)))

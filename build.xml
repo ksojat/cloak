@@ -32,40 +32,8 @@
     <property name='cloak.classes.dir' location='${build.dir}/cloak/classes'/>
     <property name='cloak.jar' location='${dist.dir}/cloak.jar'/>
 
-    <property name='clj-backtrace.dir' location='${basedir}/external/clj-backtrace'/>
-    <property name='clj-backtrace.src.dir' location='${clj-backtrace.dir}/src'/>
-    <property name='clj-backtrace.classes.dir' location='${build.dir}/clj-backtrace/classes'/>
-    <property name='clj-backtrace.jar' location='${build.dir}/clj-backtrace/clj-backtrace.jar'/>
-
-    <property name='clj-unit.dir' location='${basedir}/external/clj-unit'/>
-    <property name='clj-unit.src.dir' location='${clj-unit.dir}/src'/>
-    <property name='clj-unit.classes.dir' location='${build.dir}/clj-unit/classes'/>
-    <property name='clj-unit.jar' location='${build.dir}/clj-unit/clj-unit.jar'/>
-
     <path id="compile.classpath">
         <fileset dir='${lib.dir}' includes='*.jar'/>
-    </path>
-
-    <path id='test.classpath'>
-        <path refid='compile.classpath'/>
-        <path location='${clj-unit.jar}'/>
-        <path location='${clj-backtrace.jar}'/>
-        <path location='${cloak.jar}'/>
-        <path location='${test.dir}'/>
-        <path location='${basedir}/lib/commons-io-1.4.jar'/>
-    </path>
-
-    <path id='clj-backtrace.compile.classpath'>
-        <path refid='compile.classpath'/>
-        <path location='${clj-backtrace.src.dir}'/>
-        <path location='${clj-backtrace.classes.dir}'/>
-    </path>
-
-    <path id='clj-unit.compile.classpath'>
-        <path refid='compile.classpath'/>
-        <path location='${clj-unit.src.dir}'/>
-        <path location='${clj-unit.classes.dir}'/>
-        <path location='${clj-backtrace.jar}'/>
     </path>
 
 	<path id="cloak.compile.classpath">
@@ -88,36 +56,7 @@
         <ivy:retrieve conf='default'/>
     </target>
 
-    <target name='compile-external'>
-        <mkdir dir='${clj-backtrace.classes.dir}'/>
-        <mkdir dir='${clj-unit.classes.dir}'/>
-
-        <java
-            classname='clojure.lang.Compile'
-            classpath='${clj-backtrace.classes.dir}'>
-            <sysproperty key='clojure.compile.path' value='${clj-backtrace.classes.dir}'/>
-            <classpath refid='clj-backtrace.compile.classpath'/>
-            <arg value='backtrace.core'/>
-            <arg value='backtrace.repl'/>
-            <arg value='backtrace.utils'/>
-        </java>
-        <jar
-            destfile='${clj-backtrace.jar}' basedir='${clj-backtrace.classes.dir}'/>
-
-        <java
-            classname='clojure.lang.Compile'
-            classpath='${clj-unit.classes.dir}'>
-            <sysproperty key='clojure.compile.path' value='${clj-unit.classes.dir}'/>
-            <classpath refid='clj-unit.compile.classpath'/>
-            <arg value='unittest.core'/>
-            <arg value='unittest.consolereporter'/>
-            <arg value='unittest.utils'/>
-        </java>
-        <jar
-            destfile='${clj-unit.jar}' basedir='${clj-unit.classes.dir}'/>
-    </target>
-	
-	<target name="compile-cloak"
+	<target name="compile"
 					description="Compile Clojure sources"
           depends="init, resolve">
         <mkdir dir='${cloak.classes.dir}'/>
@@ -138,19 +77,6 @@
             <arg value='cloak.logger'/>
 		</java>
 	</target>
-
-	<target name="compile" depends="compile-cloak, compile-external"
-          description="Compile Cloak.">
-	</target>
-	
-    <target name='test'>
-        <java
-            classname='clojure.lang.Script'
-            classpathref='test.classpath'
-            fork='true'>
-            <arg value='${test.dir}/run.clj'/>
-        </java>
-    </target>
 
   <target name="jar" depends="compile"
           description="Package compiled *.class files into a jar.">

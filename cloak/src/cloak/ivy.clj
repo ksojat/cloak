@@ -36,5 +36,5 @@
 
 ;  (println "You are trying to set ivy settings."))
 
-(defn load-settings-xml [#^java.net.URL url]
+#_(defn load-settings-xml [#^java.net.URL url]
   (.parse (XmlSettingsParser. (::settings @core/*build*)) url))

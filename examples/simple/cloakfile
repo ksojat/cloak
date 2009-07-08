@@ -15,8 +15,8 @@
 
 (task
   #^{:doc "Compile project's clojure files."}
-  aot #{}
-  (println "Aot"))
+  aot #{} [src-dir]
+  (println "Aot: " src-dir))
 
 (task
   #^{:doc "Package project's comiled classes."
@@ -28,3 +28,4 @@
   #^{:doc "Remove files generated during the build."}
   clean #{}
   (println "clean"))
+

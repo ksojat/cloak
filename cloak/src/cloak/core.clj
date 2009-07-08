@@ -7,15 +7,14 @@
 ;; remove this notice, or any other, from this software.
 
 (ns cloak.core
+  (:import
+    (clojure.lang Symbol Fn Keyword)
+    (java.io File FileNotFoundException)
+    (org.apache.oro.text GlobCompiler)
+    (org.apache.oro.text.regex Perl5Matcher))
   (:use
     [clojure.set :exclude [project]]
     cloak.utils))
-
-(import '(clojure.lang Symbol Fn Keyword))
-
-(import '(java.io File FileNotFoundException)
-        '(org.apache.oro.text GlobCompiler)
-        '(org.apache.oro.text.regex Perl5Matcher))
 
 (def info
   {:version "0.1a"
@@ -48,12 +47,102 @@
     (apply f build args)))
 
 ;;
+;; Properties.
+;;
+
+(declare
+  #^{:doc (str "Tasks sould bind this in there action function to provied"
+               "property map.")}
+  *properties*)
+
+(defmulti property-resolver class)
+
+(defmethod property-resolver Fn [pred]
+  #(filter pred %))
+
+(defmethod property-resolver Symbol [s]
+  (fn [ps]
+    (if (some #(= s %) ps)
+      s
+      (throwf "Can't find property: %s" s))))
+
+(defmethod property-resolver Keyword [k]
+  (property-resolver #(= k (type %))))
+
+; TODO: Remove self
+(defn resolve-properties [pm]
+  (let [pk (keys pm)]
+    (into (empty pm)
+      (map
+        (fn [[k v]]
+          [k
+           (assoc v :deps (map #(% pk) (:resolve-fns v)))])
+        pm))))
+
+(defn eval-properties [pm]
+  (let [pm    (resolve-properties pm)
+        pg    (into {} (map (fn [[k v]] [k (:deps v)]) pm))
+        order (tsort pg)]
+    (reduce
+      (fn [m p]
+        (assoc m p
+          (let [deps (get-in pm [p :deps])
+                args (map
+                       (fn [x]
+                         (if (seq? x) (map #(get m %) x) (get m x)))
+                       deps)]
+            (apply (get-in pm [p :expr-fn]) args))))
+      {}
+      order)))
+
+(defn create-property* [name resolve-fns expr-fn]
+  #^{:type :Property} {:name name, :resolve-fns resolve-fns, :expr-fn expr-fn})
+
+(defn genp [meta-data]
+  (with-meta (gensym "property__") (merge meta-data {:anonymous true})))
+
+(defn create-property [id deps expr-fn]
+  (let [name (cond
+               (symbol?  id) id
+               (keyword? id) (genp {:type id})
+               (map?     id) (genp id)
+               :else
+                 (throwf "Invalid property id: %s" id))
+        rfs (map property-resolver deps)]
+    (create-property* name rfs expr-fn)))
+
+(defmacro property
+  ([id deps bindings expr]
+    `(*collector*
+       (create-property '~id '~deps (fn ~bindings ~expr))))
+
+  ([id bindings expr]
+    `(*collector*
+       (create-property '~id '~bindings (fn ~bindings ~expr))))
+
+  ([id expr]
+    `(*collector*
+       (create-property '~id [] (fn [] ~expr)))))
+
+; TODO: This will work by name, but what i need is to use property-resolver
+(defmacro with-properties [pm deps bindings & body]
+  `(let [~bindings (map (fn [p#] (~pm p#)) ~deps)]
+     ~@body))
+
+(defmacro letp
+  ([bindings]
+    `(println "Not implemented for now"))
+
+  ([imports bindings]
+    `(println "Not implemented for now")))
+
+;;
 ;; Build Collectors.
 ;;
 
 (def *collector* identity)
 
-(defn with-collector* [collector-fn body-fn]
+(defn with-collector** [collector-fn body-fn]
   (reduce
     collector-fn
     {}
@@ -61,6 +150,20 @@
       (binding [*collector* #(swap! data conj %)]
         (body-fn))
       @data)))
+
+(defn with-collector* [collector-fn body-fn]
+  (let [{props :properties, tasks :tasks}
+         (with-collector** collector-fn body-fn)
+        props (eval-properties props)]
+    {:tasks
+      (into {}
+        (map
+          (fn [[k {r :resolve-fn a :action-fn :as t}]]
+            [k
+             (-> t
+               (assoc :resolve-fn (partial r props))
+               (assoc :action-fn  (partial a props)))])
+          tasks))}))
 
 (defmacro with-collector [collector-fn & body]
   `(with-collector* ~collector-fn (fn [] ~@body)))
@@ -155,143 +258,6 @@
   (assoc-in [:groups (:name x)] (dissoc x :name)))
 
 ;;
-;; Properties.
-;;
-
-(defmulti property-resolver class)
-
-(defmethod property-resolver Fn [pred]
-  #(filter pred %))
-
-(defmethod property-resolver Symbol [s]
-  (fn [pm]
-    (let [x (property-resolver #(= s %))
-          r (first (x pm))]; TODO: Throw if no r found
-      r)))
-
-(defmethod property-resolver Keyword [k]
-  (property-resolver #(= k (type %))))
-
-(defn resolve-properties [pm]
-  (reduce
-    (fn [pm [k v]]
-      (assoc pm k
-        (assoc v :deps ((:resolve-fn v)))))
-    {}
-    pm))
-
-(defn eval-properties [pm]
-  (let [pm    (resolve-properties pm)
-        pg    (into {} (map (fn [[k v]] [k (:deps v)]) pm))
-        order (tsort pg)]
-    (println
-    (reduce
-      (fn [m [k v]]
-        (assoc m k
-          (let [deps (:deps v)
-                args (map #(get m %) deps)]
-            (apply (:expr-fn v) args))))
-      {}
-      pm))))
-
-(defn genp [meta-data]
-  (with-meta (gensym "property__") (merge meta-data {:anonymous true})))
-
-(defn create-property [id resolve-fn expr-fn]
-  (let [name (cond
-               (symbol?  id) id
-               (keyword? id) (genp {:type id})
-               (map?     id) (genp id)
-               :else
-                 (throwf "Unsupported property id: %s" id))]
-    #^{:type :Property} {:name name, :resolve-fn resolve-fn, :expr-fn expr-fn}))
-
-(defmacro property
-  ([id deps bindings expr]
-    `(*collector*
-       (create-property '~id (fn [] '~deps) (fn ~bindings ~expr))))
-
-  ; TODO: Check are all bindings symbols
-  ([id bindings expr]
-    `(*collector*
-       (create-property '~id (fn [] '~bindings) (fn ~bindings ~expr))))
-
-  ([id expr]
-    `(*collector*
-       (create-property '~id (fn [] #{}) (fn [] ~expr)))))
-
-(defmacro letp
-  ([bindings]
-    `(println "Not implemented for now"))
-
-  ([imports bindings]
-    `(println "Not implemented for now")))
-
-;;
-;; Build related functions.
-;;
-
-; TODO: Update log to use emmit function
-(defn log [level & args]
-  (println (apply str " " (.toUpperCase (name level)) ": " args)))
-
-(defn build-settings []
-  {:logger    {:level :info
-               :fn log}
-   :file      ["cloakfile" "cloakfile.clj"]
-   :describe  false
-   :verbose   false
-   :targets   []; TODO: Autodiscover defaults
-   :tasks     {}
-   :queue     []; TODO ???
-   :cwd       (System/getProperty "user.dir" "")
-   :bin       (System/getProperty "cloak.bin" "cloak")
-   :home      (System/getProperty "cloak.home" "")
-   :listeners @global-listeners})
-
-(defn create-build [settings]
-  (let [build (atom (merge (build-settings) settings))]
-    ; Notify all listeners that build was initialized.
-    (emmit build ::build-created)
-    build))
-
-(defn find-cloakfile [files cwd]
-  (first
-    (filter #(.exists %)
-      (map #(File. (File. cwd) %) files))))
-
-(defn load-cloakfile! [build]
-  (let [files (:file @build), cwd (:cwd @build)]
-    (if-let [file (find-cloakfile files cwd)]
-      (do
-        (emmit build ::cloakfile-found file)
-        (try
-          #_(println; TODO: Remove this
-            (with-collector main-collector
-              (load-file (.getAbsolutePath file))))
-          (let [x (with-collector main-collector
-                    (load-file (.getAbsolutePath file)))]
-            (println (eval-properties (:properties x))))
-
-          (catch FileNotFoundException e
-            (emmit build ::cloakfile-missing files)
-            (System/exit 1))
-
-          (catch Exception e
-            (emmit build ::cloakfile-failed file e)
-            (System/exit 1))))
-      (do
-        (emmit build ::cloakfile-missing files)
-        (System/exit 1)))))
-
-; TODO: If its describe, describe only and exit
-(defn start-build! [build]
-  ;(println build)
-  (emmit build ::build-started)
-  (load-cloakfile! build)
-  (emmit build ::build-finished))
-
-;;
 ;; Task ids
 ;;
 
@@ -322,14 +288,17 @@
 ;; Task dependency resolvers.
 ;;
 
-(defmulti resolver class)
+(defmulti task-resolver class)
+
+; TODO:
+; Remove set, add symbol and set can contain symbols, predicate fns and keywords.
 
 (defmethod
   #^{:doc "Trie to resolve task's dependencies from set of exact task names."}
-  resolver clojure.lang.IPersistentSet [s]
+  task-resolver clojure.lang.IPersistentSet [s]
   (let [s (into (empty s) (map (fn [x] (if (list? x) x (list x))) s))]
-    (fn [ts]
-      (let [x (intersection s ts)]
+    (fn [_ ts]
+      (let [x (intersection s (set ts))]
         (if (= s x)
           x
           (throwf "Could not find dependencies: %s" (difference s ts)))))))
@@ -337,14 +306,21 @@
 (defmethod
   #^{:doc "Dependencies are collected based on predicate used to
            filter task names."}
-  resolver clojure.lang.Fn [pred]
-  (fn [ts]
+  task-resolver Fn [pred]
+  (fn [_ ts]
     (into #{} (filter pred ts))))
+
+(defmethod
+  task-resolver Symbol [s]
+  (fn [_ ts]
+    (if (some #(= s %) ts)
+      s
+      (throwf "Can't find task: %s" s))))
 
 (defmethod
   #^{:doc "Dependencies are collected based on value of :type key in there
            metadata."}
-  resolver clojure.lang.Keyword [k] (resolver #(= k (type %))))
+  task-resolver Keyword [k] (task-resolver #(= k (type %))))
 
 ;;
 ;; Tasks.
@@ -354,75 +330,155 @@
 (defmulti create-task
   (fn [type & _] type))
 
-; TODO: Fix fn-tail to remove first argument from bindings.
 ; TODO: Why do i need to import create-task in target namespace??
-; TODO: Add with-meta to fn-tail output
-; TODO: Add type as vector [type base] so TaskBase dosn't need to be
-;       the only taks base.
 (defmacro deftask [type & fn-tail]
-  `(do
-      (derive ~type ::Task)
-      (defmethod create-task ~type ~@fn-tail)))
+  (let [[type base] (if (seq? type) type [type ::Task])]
+    `(do
+      (derive ~type ~base)
+      (defmethod create-task
+        ~type
+        ([_# & args#]
+          (let [r# (apply (fn ~@fn-tail) args#)]
+            (with-meta r# (assoc (meta r#) :type ~type))))))))
 
-(defn resolve-1 [{d :deps, r :resolve :as task} ts]
-  (let [ts (into (empty ts) (filter #(not= (:name task) %) ts))]
-    ; TODO: Catch exceptions, report with full taks name
-    (try
-      (-> task
-        (assoc :deps (r ts)) (dissoc :resolve))
-      (catch Exception e
-        (throw (Exception. (str "Task " (:name task) ": " (.getMessage e))))))))
+(defn resolve-tasks [tm]
+  (let [tk (set (keys tm))]
+    (into (empty tm)
+      (map
+        (fn [[k v]]
+          [k (assoc v :deps ((:resolve-fn v) (disj tk k)))])
+        tm))))
 
-(defn resolve-all [tasks]
-  (let [ts (set (map :name tasks))]
-    (println ts)
-    (map #(resolve-1 % ts) tasks)))
-
-; TODO: Remove this
-;(defmethod print-method ::TaskBase [t #^java.io.Writer w]
-;  (.write w (str "Task: " (:name t))))
-
-(defmacro project [name & specs])
-
-(defn pop-module-prefix [prefix tasks]
-  (into (empty tasks)
-    (map
-      (fn [t]
-        (if (and (= (first t) prefix) (next t))
-          (pop t)
-          t))
-      tasks)))
-
-(defn module-collector [name body-fn]
-  (let [tasks (atom [])]
-    (binding [*collector* #(swap! tasks conj %)]
-      (body-fn))
-    (doseq [{n :name, r :resolve :as t} @tasks]
-      (let [n (conj n name)
-            r (fn [ts]
-                (let [ts (filter seq? ts)]
-                  (r ts)))]
-        (*collector* (assoc t :name n :resolve r))))))
-
-(defmacro module [name & body]
-  `(module-collector '~name (fn [] ~@body)))
-
-(defmacro configuration [& body])
+(defn execute-tasks [start tm]
+  (let [tm (resolve-tasks tm)
+        tg (into {} (map (fn [[k v]] [k (:deps v)]) tm))
+        order (tsort tg start)]
+    (doseq [t order]
+      ((:action-fn (tm t))))))
 
 ;;
-;; Groups and fragments.
+;; Fragments.
 ;;
 
-(defn load-fragment [& names]
-  (println "Not implemented for now"))
+(def +fragments+
+  (atom {}))
 
-(defmacro fragment [name & body]
-  `(println "Fragments are not implemented for now"))
+(defmulti fragment-resolver type)
+
+(defmethod fragment-resolver Fn [pred]
+  #(filter pred %))
+
+(defmethod fragment-resolver Symbol [s]
+  (fn [fs]
+    (if (some #(= s %) fs)
+      s
+      (throwf "Unknow fragment %s: " s))))
+
+(defmethod fragment-resolver Keyword [k]
+  (fragment-resolver #(= k (type %))))
+
+(defmethod fragment-resolver clojure.lang.IPersistentMap [m]
+  (fn [fs]
+    (fragment-resolver #(= m (meta %)))))
+
+(defn add-fragment! [fragment]
+  (swap! +fragments+ assoc (:name fragment) (dissoc fragment :name)))
+
+(defn create-fragment []
+  (println "Working on this one"))
+
+(defmacro fragment [name f-deps p-deps p-bindings & body]
+  `(add-fragment!
+     {:name '~name
+      :f-deps ~f-deps
+      :p-deps ~p-deps
+      :expand-fn
+        (fn ~p-bindings ~@body)}))
+
+;;
+;; Groups.
+;;
 
 (defn create-group [name fragments]
   (with-meta
     {:name name :fragments fragments}
     {:type ::Group}))
 
+(defmacro build [name & body]
+  `(*collector*
+     (with-meta
+       {:name '~name
+        :expand-fn (fn [] ~@body)}
+       {:type :TopGroup})))
+
 (defmacro group [name & body]
   `(println "Groups are not implemented for now"))
+
+
+;;
+;; Build related functions.
+;;
+
+; TODO: Update log to use emmit function
+(defn log [level & args]
+  (println (apply str " " (.toUpperCase (name level)) ": " args)))
+
+(defn build-settings []
+  {:logger    {:level :info
+               :fn log}
+   :file      ["cloakfile" "cloakfile.clj"]
+   :describe  false
+   :verbose   false
+   :targets   []; TODO: Autodiscover defaults
+   :tasks     {}
+   :queue     []; TODO ???
+   :cwd       (System/getProperty "user.dir" "")
+   :bin       (System/getProperty "cloak.bin" "cloak")
+   :home      (System/getProperty "cloak.home" "")
+   :listeners @global-listeners})
+
+(defn create-build [settings]
+  (let [build (atom (merge (build-settings) settings))]
+    ; Notify all listeners that build was initialized.
+    (emmit build ::build-created)
+    build))
+
+(defn find-cloakfile [files cwd]
+  (let [cwd (File. cwd)]
+    (first
+      (filter #(.exists %)
+        (map #(File. cwd %) files)))))
+
+(defn load-cloakfile! [build]
+  (let [files (:file @build), cwd (:cwd @build)]
+    (if-let [file (find-cloakfile files cwd)]
+      (do
+        (emmit build ::cloakfile-found file)
+        (try
+          (with-collector main-collector
+            (load-file (.getAbsolutePath file)))
+
+          (catch FileNotFoundException e
+            (emmit build ::cloakfile-missing files)
+            (System/exit 1))
+
+          (catch Exception e
+            (emmit build ::cloakfile-failed file e)
+            (System/exit 1))))
+      (do
+        (emmit build ::cloakfile-missing files)
+        (System/exit 1)))))
+
+; TODO: Add cli patterns matching
+(defn start-tasks [patterns tasks]
+  (filter #(get (meta (last %)) :default) (keys tasks)))
+
+; TODO: If its describe, describe only and exit
+(defn start-build! [build]
+  (emmit build ::build-started)
+  (let [defs  (load-cloakfile! build)
+        tasks (resolve-tasks (:tasks defs))
+        start (start-tasks (:targets @build) tasks)]
+    ; TODO: If no start tasks are found, terminate
+    (execute-tasks start tasks))
+  (emmit build ::build-finished))

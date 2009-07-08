@@ -8,30 +8,44 @@
 
 (ns cloak.tasks
   (:use
-    [cloak.core :only [*collector* resolver deftask create-task]]))
+    [cloak.core :only [*collector* with-properties task-resolver deftask create-task]]))
 
-(deftask ::Task [_ name deps f]
-  (with-meta
-    {:name (if (list? name) name (list name)), :resolve (resolver deps), :f f}
-    {:type ::Task}))
+(deftask ::Task [name deps action-fn]
+  {:name       (if (list? name) name (list name))
+   :resolve-fn (task-resolver deps)
+   :action-fn  action-fn})
 
-(defmacro task [name deps props & body]
-  `(*collector*
-     (create-task ::Task '~name ~deps (fn [] ~@body))))
+(defmacro task [name deps & [p1 p2 & _ :as body]]
+  (cond
+    (and (vector? p1) (vector? p2))
+      `(*collector*
+         (create-task ::Task '~name ~deps
+           (fn [pm#]
+             (with-properties pm# '~p1 ~p2 ~@(nnext body)))))
+
+    (vector? p1)
+      `(*collector*
+         (create-task ::Task '~name ~deps
+           (fn [pm#]
+             (with-properties pm# '~p1 ~p1 ~@(next body)))))
+
+    :else
+      `(*collector*
+         (create-task ::Task '~name ~deps (fn [pm#] ~@body)))))
 
 ;; TODO: Error, no name
-(deftask ::Clean [filesets]
-  (with-meta
-    {:name name, :resolve (resolver #{}), :f (fn [] (println "Clean"))}
-    {:type ::Clean}))
+;(deftask ::Clean [filesets]
+;  (with-meta
+;    {:name name, :resolve (resolver #{}), :f (fn [] (println "Clean"))}
+;    {:type ::Clean}))
 
 ; TODO: Define clean macro
 
 ;; TODO: Error, no name
-(deftask ::Package [filesets]
-  (with-meta
-    {:name name, :resolve (resolver #{}), :f (fn [] (println "Package"))}
-    {:type ::Package}))
+;(deftask ::Package [filesets]
+;  (with-meta
+;    {:name name, :resolve (resolver #{}), :f (fn [] (println "Package"))}
+;    {:type ::Package}))
 
 ; TODO: Define package macro
 

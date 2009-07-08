@@ -1,7 +1,4 @@
-;; simple build system in Clojure
-;; Roland Sadowski [szabla gmail com]
-
-;; Copyright (c) 2008 Roland Sadowski. All rights reserved.  The use and
+;; Copyright (c) 2009 Krešimir Šojat. All rights reserved.  The use and
 ;; distribution terms for this software are covered by the Common
 ;; Public License 1.0 (http://www.opensource.org/licenses/cpl1.0.php)
 ;; which can be found in the file CPL.TXT at the root of this
@@ -24,47 +21,6 @@
 (alter-meta! *ns* assoc-in [:groups :filesystem]
   {:name "Filesystem"
    :desc "Manage files and directories on filesystem."})
-
-(def #^{:private true} p-info)
-(def #^{:private true} *p*)
-
-(defn- remember-pi
-  "Utility fn for mutating a var in run-process."
-  [kw val]
-  (set! p-info (assoc p-info kw val)))
-
-(defn run-command [#^String cmd-str]
-  (let [params (java.util.ArrayList.)
-		pb (ProcessBuilder. (Arrays/asList (.split cmd-str " ")))]
-	(.redirectErrorStream pb true)
-	(try
-	 (binding [p-info {} *p* (.start pb)]
-	   (remember-pi :in-stream (.getInputStream *p*))
-	   (.waitFor *p*)
-       (remember-pi :output (IOUtils/toString (p-info :in-stream)))
-	   (.destroy *p*)
-	   (if (not= 0 (.exitValue *p*))
-		 (let []
-		   (println "Error executing command: " cmd-str)
-		   (print (:output p-info))
-		   :fail)
-		 (let []
-		   (print (:output p-info))
-		   :ok)))
-	 (catch java.io.IOException ex :fail))))
-
-(defn
-  #^{:doc    "Performs a shell command."
-     :action true
-     :group  :filesystem}
-  sh
-  ([command]
-     (run-command command))
-  ([command flag]
-     (cond (= flag :dofail)
-             (when (= :fail (sh command))
-               (throw (Exception. "shell command failed.")))
-           :else (throw (IllegalArgumentException. (format "sh: unsupported flag %s" (str flag)))))))
 
 (defn
   #^{:doc    "Copies a file"
@@ -93,9 +49,6 @@
      :group  :filesystem}
   mkdir [& dirs]
   (doseq [dir dirs] (.mkdirs (File. dir))))
-
-; TODO: Do i need this?
-(defn exists? [fname] (.exists (File. fname)))
 
 (defn
   #^{:doc    "Remove file."

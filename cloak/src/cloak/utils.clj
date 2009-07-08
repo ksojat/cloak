@@ -14,7 +14,7 @@
 
 (defn tsort
   ([graph start]
-    (println start)
+    (println start); TODO: Remove this
     (let [hidden (gensym)
           graph  (assoc graph hidden start)
           visited (atom [])
