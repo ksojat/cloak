@@ -74,6 +74,7 @@
             <arg value='cloak.ivy'/>
             <arg value='cloak.core'/>
             <arg value='cloak.tasks'/>
+            <arg value='cloak.build'/>
             <arg value='cloak.logger'/>
 		</java>
 	</target>

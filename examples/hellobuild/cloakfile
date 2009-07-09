@@ -1,0 +1,21 @@
+(use
+  ['cloak.core :only ['property]]
+  '(cloak build tasks actions))
+
+(build hellobuild
+
+  (task aot #{}
+    (println "Aot"))
+
+  (task
+    #^{:default true}
+    aot-jar #{'aot}
+    (println "Aot jar"))
+
+  (task clean #{}
+    (println "Clean")
+
+  (group #^{:doc "Group A"} group-a
+
+    (task aot #{}
+      (println "Group A: aot")))))

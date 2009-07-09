@@ -152,9 +152,10 @@
       @data)))
 
 (defn with-collector* [collector-fn body-fn]
-  (let [{props :properties, tasks :tasks}
+  (let [{props :properties, tasks :tasks gm :groups}
          (with-collector** collector-fn body-fn)
         props (eval-properties props)]
+    (println "Groups: " gm)
     {:tasks
       (into {}
         (map
@@ -181,6 +182,7 @@
   (assoc-in data [:tasks xn] (dissoc x :name)))
 
 (defn add-group [data {xn :name :as x}]
+  (println "Adding group: " x)
   (when (get-in data [:groups xn])
     (throwf "Group %s already defined." xn))
 
@@ -204,16 +206,16 @@
 
   (add-task data x))
 
-(defmethod main-collector :TopGroup [{pm :properties tm :tasks g :group :as data} x]
-  (when g
+(defmethod main-collector :TopGroup [{pm :properties tm :tasks gm :groups :as data} x]
+  (when (not (empty? gm))
     (throwf "Can't redefine topleve build group."))
 
-  (when (or pm tm)
+  (when (or pm tm); TODO: not empty
     (throwf
       (str "Can't define toplevel build group, tasks or properties are "
            "already declared.")))
 
-  (assoc data :group g))
+  (add-group data x))
 
 (defmethod main-collector :SubGroup [_ x]
   (throwf "Can't create sub group outside of toplevel build group."))
@@ -399,21 +401,19 @@
 ;; Groups.
 ;;
 
-(defn create-group [name fragments]
-  (with-meta
-    {:name name :fragments fragments}
-    {:type ::Group}))
+#_(defn create-top-group [name expand-fn]
+  #^{:type :TopGroup} {:name name :expand-fn expand-fn})
 
-(defmacro build [name & body]
+#_(defmacro build [name & body]
   `(*collector*
-     (with-meta
-       {:name '~name
-        :expand-fn (fn [] ~@body)}
-       {:type :TopGroup})))
+     (create-top-group '~name (fn [] ~@body))))
 
-(defmacro group [name & body]
-  `(println "Groups are not implemented for now"))
+#_(defn create-sub-group [name expand-fn]
+  #^{:type :SubGroup} {:name name :expand-fn expand-fn})
 
+#_(defmacro group [name & body]
+  `(*collector*
+     (create-sub-group '~name (fn [] ~@body))))
 
 ;;
 ;; Build related functions.

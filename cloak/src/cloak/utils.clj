@@ -40,9 +40,12 @@
       (drop-last @visited)))
 
   ([graph]
-    ; TODO: Fix this
-    (let [start (difference
-                  (set (keys graph)) (into #{} (mapcat (fn [[k v]] v) graph)))]
-      (if (empty? start)
-        (throwf "Graph is not a DAG.")
-        (tsort graph start)))))
+    (if (empty? graph)
+      nil
+
+      ; TODO: Fix this
+      (let [start (difference
+                    (set (keys graph)) (into #{} (mapcat (fn [[k v]] v) graph)))]
+        (if (empty? start)
+          (throwf "Graph is not a DAG.")
+          (tsort graph start))))))
